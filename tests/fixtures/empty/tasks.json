@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-05-02T10:00:00.000Z",
+  "_instructions": {
+    "forAI": "เมื่อทำงานเสร็จแต่ละ session ให้สร้างไฟล์ patch ใน folder patches/ แทนการแก้ tasks.json โดยตรง",
+    "patchPattern": {
+      "description": "สร้างไฟล์ JSON ใน patches/ ชื่อ YYYY-MM-DDTHH-MM-SS_AgentName.json",
+      "changeTypes": {
+        "status_change": "{ type, projectId, taskId, from, to, note? }",
+        "add_task": "{ type, projectId, parentTaskId (null=root), task: { full task object } }",
+        "files_modified": "{ type, projectId, taskId, files: [\"path1\", \"path2\"] }",
+        "add_log": "{ type, projectId, taskId, log: { timestamp, agent, action } }"
+      }
+    }
+  },
+  "projects": []
+}

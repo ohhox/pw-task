@@ -1,0 +1,110 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-05-02T10:00:00.000Z",
+  "projects": [
+    {
+      "id": "proj-legacy-001",
+      "name": "Legacy Project (v0.9 schema)",
+      "description": "schema เก่าที่ยังไม่มี goal, workingDir, prompt, model, lastSessionId, runHistory, lastNote",
+      "color": "#6b7280",
+      "createdAt": "2026-04-01T08:00:00.000Z",
+      "tasks": [
+        {
+          "id": "task-l-01",
+          "title": "Old Task A",
+          "description": "task ที่สร้างก่อน schema v1.0 — ไม่มี prompt/model fields",
+          "status": "done",
+          "priority": "high",
+          "tags": ["legacy"],
+          "aiAgent": "Claude",
+          "reviews": [],
+          "filesModified": ["src/old-file.ts"],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-04-01T09:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            },
+            {
+              "timestamp": "2026-04-02T10:00:00.000Z",
+              "agent": "Manual",
+              "action": "changed status from todo to done"
+            }
+          ],
+          "createdAt": "2026-04-01T09:00:00.000Z",
+          "updatedAt": "2026-04-02T10:00:00.000Z"
+        },
+        {
+          "id": "task-l-02",
+          "title": "Old Task B",
+          "description": "task เก่าที่ไม่มี activityLog (เพิ่ม field หลัง task นี้สร้าง)",
+          "status": "pending_review",
+          "priority": "medium",
+          "tags": [],
+          "aiAgent": "Claude",
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "createdAt": "2026-04-05T08:00:00.000Z"
+        },
+        {
+          "id": "task-l-03",
+          "title": "Old Task C — ไม่มี createdAt",
+          "description": "task ที่ data หายไปบางส่วน (createdAt missing)",
+          "status": "todo",
+          "priority": "low",
+          "tags": [],
+          "aiAgent": "Claude",
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": []
+        },
+        {
+          "id": "task-l-04",
+          "title": "Old Task D — reviews format เก่า (string array)",
+          "description": "format reviews แบบเก่าที่เก็บเป็น array of strings แทน array of objects",
+          "status": "done",
+          "priority": "high",
+          "tags": [],
+          "aiAgent": "Claude",
+          "reviews": ["approved by John on 2026-04-10"],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-04-08T09:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            }
+          ],
+          "createdAt": "2026-04-08T09:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "proj-legacy-002",
+      "name": "Another Legacy Project",
+      "description": "project เก่าที่ไม่มี _instructions ที่ root level และไม่มี goal/workingDir ใน project",
+      "color": "#9ca3af",
+      "createdAt": "2026-03-15T08:00:00.000Z",
+      "tasks": [
+        {
+          "id": "task-l2-01",
+          "title": "Migrated Task",
+          "description": "task ที่ migrate มาจาก system เก่า — มีแค่ title กับ status",
+          "status": "todo",
+          "priority": "medium",
+          "tags": [],
+          "aiAgent": "Claude",
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [],
+          "createdAt": "2026-03-15T08:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}

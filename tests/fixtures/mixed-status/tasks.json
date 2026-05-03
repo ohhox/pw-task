@@ -1,0 +1,223 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-05-02T10:00:00.000Z",
+  "_instructions": {
+    "forAI": "เมื่อทำงานเสร็จแต่ละ session ให้สร้างไฟล์ patch ใน folder patches/ แทนการแก้ tasks.json โดยตรง",
+    "patchPattern": {
+      "description": "สร้างไฟล์ JSON ใน patches/ ชื่อ YYYY-MM-DDTHH-MM-SS_AgentName.json",
+      "changeTypes": {
+        "status_change": "{ type, projectId, taskId, from, to, note? }",
+        "add_task": "{ type, projectId, parentTaskId (null=root), task: { full task object } }",
+        "files_modified": "{ type, projectId, taskId, files: [\"path1\"] }",
+        "add_log": "{ type, projectId, taskId, log: { timestamp, agent, action } }"
+      }
+    }
+  },
+  "projects": [
+    {
+      "id": "proj-mix-001",
+      "name": "Mixed Status Project",
+      "description": "มี tasks ทุก status เพื่อทดสอบ filter และ color coding",
+      "goal": "ตรวจสอบว่า dashboard แสดง badge สี ถูกต้องทุก status",
+      "workingDir": "D:\\DEV\\Mixed",
+      "color": "#f59e0b",
+      "createdAt": "2026-05-01T08:00:00.000Z",
+      "tasks": [
+        {
+          "id": "task-m-01",
+          "title": "Task ที่ยังไม่เริ่ม (todo)",
+          "description": "task ที่ยังไม่มีใครแตะ",
+          "status": "todo",
+          "priority": "low",
+          "tags": ["todo-tag"],
+          "aiAgent": "Claude",
+          "model": "claude-haiku-4-5-20251001",
+          "prompt": "Do something simple",
+          "lastSessionId": null,
+          "runHistory": [],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-01T08:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            }
+          ],
+          "createdAt": "2026-05-01T08:00:00.000Z"
+        },
+        {
+          "id": "task-m-02",
+          "title": "Task ที่กำลังทำ (in_progress)",
+          "description": "task ที่ Claude กำลัง run อยู่",
+          "status": "in_progress",
+          "priority": "high",
+          "tags": ["active"],
+          "aiAgent": "Claude",
+          "model": "claude-sonnet-4-6",
+          "prompt": "Implement the core feature",
+          "lastSessionId": "sess-m-002",
+          "runHistory": [
+            {
+              "runId": "run-m-002",
+              "timestamp": "2026-05-02T09:00:00.000Z",
+              "model": "claude-sonnet-4-6",
+              "sessionId": "sess-m-002",
+              "summary": null
+            }
+          ],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": ["src/feature.ts"],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-01T08:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            },
+            {
+              "timestamp": "2026-05-02T09:00:00.000Z",
+              "agent": "Claude",
+              "action": "changed status from todo to in_progress"
+            }
+          ],
+          "createdAt": "2026-05-01T08:00:00.000Z",
+          "updatedAt": "2026-05-02T09:00:00.000Z"
+        },
+        {
+          "id": "task-m-03",
+          "title": "Task รอ review (pending_review)",
+          "description": "task ที่ Claude ทำเสร็จแล้ว รอ human approve",
+          "status": "pending_review",
+          "priority": "high",
+          "tags": ["needs-review"],
+          "aiAgent": "Claude",
+          "model": "claude-sonnet-4-6",
+          "prompt": "Refactor the database layer",
+          "lastSessionId": "sess-m-003",
+          "runHistory": [
+            {
+              "runId": "run-m-003",
+              "timestamp": "2026-05-02T08:00:00.000Z",
+              "model": "claude-sonnet-4-6",
+              "sessionId": "sess-m-003",
+              "summary": "refactor เสร็จ ย้าย logic ออกจาก controller"
+            }
+          ],
+          "lastNote": {
+            "timestamp": "2026-05-02T08:30:00.000Z",
+            "agent": "Claude",
+            "summary": "refactor เสร็จ ย้าย DB logic ออก 3 modules แล้ว รอตรวจ"
+          },
+          "reviews": [],
+          "filesModified": ["src/db/repository.ts", "src/controllers/user.ts"],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-01T08:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            },
+            {
+              "timestamp": "2026-05-02T08:30:00.000Z",
+              "agent": "Claude",
+              "action": "changed status from in_progress to pending_review: refactor เสร็จ"
+            }
+          ],
+          "createdAt": "2026-05-01T08:00:00.000Z",
+          "updatedAt": "2026-05-02T08:30:00.000Z"
+        },
+        {
+          "id": "task-m-04",
+          "title": "Task ที่ approve แล้ว (done)",
+          "description": "task ที่ human approve แล้ว ถือว่าสำเร็จ",
+          "status": "done",
+          "priority": "medium",
+          "tags": ["completed"],
+          "aiAgent": "Claude",
+          "model": "claude-haiku-4-5-20251001",
+          "prompt": "Setup CI/CD pipeline",
+          "lastSessionId": "sess-m-004",
+          "runHistory": [
+            {
+              "runId": "run-m-004",
+              "timestamp": "2026-05-01T10:00:00.000Z",
+              "model": "claude-haiku-4-5-20251001",
+              "sessionId": "sess-m-004",
+              "summary": "setup CI/CD เสร็จ"
+            }
+          ],
+          "lastNote": {
+            "timestamp": "2026-05-01T10:00:00.000Z",
+            "agent": "Claude",
+            "summary": "CI/CD พร้อม: GitHub Actions + deploy to staging"
+          },
+          "reviews": [
+            {
+              "reviewer": "Manual",
+              "timestamp": "2026-05-01T11:00:00.000Z",
+              "decision": "approved",
+              "comment": "ดีมาก"
+            }
+          ],
+          "filesModified": [".github/workflows/ci.yml"],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-01T08:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            },
+            {
+              "timestamp": "2026-05-01T10:00:00.000Z",
+              "agent": "Claude",
+              "action": "changed status from in_progress to pending_review: setup เสร็จ"
+            },
+            {
+              "timestamp": "2026-05-01T11:00:00.000Z",
+              "agent": "Manual",
+              "action": "changed status from pending_review to done"
+            }
+          ],
+          "createdAt": "2026-05-01T08:00:00.000Z",
+          "updatedAt": "2026-05-01T11:00:00.000Z",
+          "completedAt": "2026-05-01T11:00:00.000Z"
+        },
+        {
+          "id": "task-m-05",
+          "title": "Task ที่ติดปัญหา (blocked)",
+          "description": "รอ API key จากทีม backend ก่อนถึงจะทำต่อได้",
+          "status": "blocked",
+          "priority": "high",
+          "tags": ["blocked", "waiting"],
+          "aiAgent": "Claude",
+          "model": "claude-sonnet-4-6",
+          "prompt": "Integrate with third-party payment API",
+          "lastSessionId": null,
+          "runHistory": [],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-01T08:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            },
+            {
+              "timestamp": "2026-05-02T07:00:00.000Z",
+              "agent": "Manual",
+              "action": "changed status from todo to blocked: รอ API key จาก payment provider"
+            }
+          ],
+          "createdAt": "2026-05-01T08:00:00.000Z",
+          "updatedAt": "2026-05-02T07:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-02T10:30:00.000Z",
+  "agent": "Claude",
+  "changes": [
+    {
+      "type": "add_task",
+      "projectId": "proj-patch-001",
+      "parentTaskId": null,
+      "task": {
+        "id": "task-p-03",
+        "title": "Task ใหม่ที่เพิ่มโดย patch",
+        "description": "task นี้ไม่ได้อยู่ใน tasks.json เดิม แต่ถูกเพิ่มผ่าน patch — dashboard ต้อง render task นี้หลัง apply",
+        "status": "todo",
+        "priority": "low",
+        "tags": ["new-from-patch"],
+        "aiAgent": "Claude",
+        "model": "claude-haiku-4-5-20251001",
+        "prompt": "Deploy to production",
+        "lastSessionId": null,
+        "runHistory": [],
+        "lastNote": null,
+        "reviews": [],
+        "filesModified": [],
+        "subtasks": [],
+        "activityLog": [
+          {
+            "timestamp": "2026-05-02T10:30:00.000Z",
+            "agent": "Claude",
+            "action": "created task via patch"
+          }
+        ],
+        "createdAt": "2026-05-02T10:30:00.000Z"
+      }
+    }
+  ]
+}

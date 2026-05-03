@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-05-02T10:00:00.000Z",
+  "_instructions": {
+    "forAI": "ไฟล์นี้มีข้อมูลบางส่วนที่ผิดพลาดโดยเจตนาเพื่อทดสอบ error handling"
+  },
+  "projects": [
+    {
+      "id": "proj-corrupt-001",
+      "name": "Project ที่มี tasks ผิดปกติ",
+      "description": "ทดสอบ edge cases เช่น task ที่ status ไม่ถูกต้อง, priority เป็น null, id ซ้ำ",
+      "color": "#ef4444",
+      "createdAt": "2026-05-02T10:00:00.000Z",
+      "tasks": [
+        {
+          "id": "task-c-01",
+          "title": "Task ที่ status ไม่ถูกต้อง",
+          "description": "status เป็น 'unknown_status' ซึ่งไม่อยู่ใน enum ที่กำหนด",
+          "status": "unknown_status",
+          "priority": "high",
+          "tags": [],
+          "aiAgent": "Claude",
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [],
+          "createdAt": "2026-05-02T10:00:00.000Z"
+        },
+        {
+          "id": "task-c-02",
+          "title": "Task ที่ priority เป็น null",
+          "description": "priority field เป็น null แทนที่จะเป็น string",
+          "status": "todo",
+          "priority": null,
+          "tags": [],
+          "aiAgent": "Claude",
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [],
+          "createdAt": "2026-05-02T10:00:00.000Z"
+        },
+        {
+          "id": "task-c-01",
+          "title": "Task ที่ id ซ้ำกับ task-c-01",
+          "description": "id ซ้ำ — dashboard ต้อง handle gracefully ไม่ crash",
+          "status": "todo",
+          "priority": "medium",
+          "tags": [],
+          "aiAgent": "Claude",
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [],
+          "createdAt": "2026-05-02T10:00:00.000Z"
+        },
+        {
+          "id": "task-c-03",
+          "title": "Task ที่ subtasks เป็น null แทน array",
+          "description": "subtasks ควรเป็น [] แต่กลับเป็น null",
+          "status": "todo",
+          "priority": "low",
+          "tags": null,
+          "aiAgent": "Claude",
+          "reviews": null,
+          "filesModified": null,
+          "subtasks": null,
+          "activityLog": null,
+          "createdAt": "2026-05-02T10:00:00.000Z"
+        },
+        {
+          "id": "task-c-04",
+          "title": "Task ที่ activityLog มี entry ผิดรูปแบบ",
+          "description": "activityLog entry บางตัวไม่มี timestamp หรือ agent",
+          "status": "todo",
+          "priority": "medium",
+          "tags": [],
+          "aiAgent": "Claude",
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "action": "created task — no timestamp no agent"
+            },
+            {
+              "timestamp": "2026-05-02T10:00:00.000Z",
+              "action": "no agent field"
+            },
+            {
+              "timestamp": "not-a-valid-date",
+              "agent": "Claude",
+              "action": "invalid date format"
+            }
+          ],
+          "createdAt": "2026-05-02T10:00:00.000Z"
+        }
+      ]
+    },
+    {
+      "id": "proj-corrupt-001",
+      "name": "Project ที่ id ซ้ำกับ project แรก",
+      "description": "project id ซ้ำ — ทดสอบว่า dashboard จัดการ duplicate project id ได้ไหม",
+      "color": "#dc2626",
+      "createdAt": "2026-05-02T10:00:00.000Z",
+      "tasks": []
+    }
+  ]
+}

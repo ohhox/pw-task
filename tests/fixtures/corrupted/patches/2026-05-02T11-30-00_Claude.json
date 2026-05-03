@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-02T11:30:00.000Z",
+  "agent": "Claude",
+  "changes": [
+    {
+      "type": "unknown_change_type",
+      "projectId": "proj-corrupt-001",
+      "taskId": "task-c-01",
+      "data": "patch ที่ใช้ change type ที่ระบบไม่รู้จัก"
+    },
+    {
+      "type": "status_change",
+      "projectId": "proj-nonexistent-999",
+      "taskId": "task-c-01",
+      "from": "todo",
+      "to": "done",
+      "note": "patch ที่อ้างถึง projectId ที่ไม่มีอยู่"
+    }
+  ]
+}

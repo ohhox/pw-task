@@ -1,0 +1,5 @@
+THIS IS NOT VALID JSON {{{
+  "version": "1.0"
+  "agent": "Claude"
+  broken patch file missing colons and commas
+  "changes": [

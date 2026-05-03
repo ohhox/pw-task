@@ -1,0 +1,38 @@
+# ─── Build artifacts ─────────────────────────────────
+node_modules/
+dist/
+.vite/
+coverage/
+src-tauri/target/
+src-tauri/Cargo.lock.bak
+*.tsbuildinfo
+
+# ─── App-generated data (transient or local-only) ───
+outputs/runs/
+outputs/patches/
+outputs/tasks.json
+outputs/tasks.json.bak
+outputs/tasks.json.*.bak
+outputs/tasks-archive.json
+config.json
+
+# ─── Personal / tooling state ────────────────────────
+.claude/settings.local.json
+.omx/
+resume.md
+task.md
+
+# ─── Editor / OS ─────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.local
+*.swp
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# ─── Tauri / Rust ────────────────────────────────────
+src-tauri/Cargo.lock
+src-tauri/icons/*.icns

@@ -1,0 +1,141 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-05-02T10:00:00.000Z",
+  "_instructions": {
+    "forAI": "เมื่อทำงานเสร็จแต่ละ session ให้สร้างไฟล์ patch ใน folder patches/ แทนการแก้ tasks.json โดยตรง",
+    "patchPattern": {
+      "description": "สร้างไฟล์ JSON ใน patches/ ชื่อ YYYY-MM-DDTHH-MM-SS_AgentName.json",
+      "changeTypes": {
+        "status_change": "{ type, projectId, taskId, from, to, note? }",
+        "add_task": "{ type, projectId, parentTaskId (null=root), task: { full task object } }",
+        "files_modified": "{ type, projectId, taskId, files: [\"path1\", \"path2\"] }",
+        "add_log": "{ type, projectId, taskId, log: { timestamp, agent, action } }"
+      }
+    }
+  },
+  "projects": [
+    {
+      "id": "proj-alpha-001",
+      "name": "Alpha Project",
+      "description": "โปรเจกต์ทดสอบ single project scenario",
+      "goal": "ทดสอบการแสดงผล dashboard กับ project เดียว",
+      "workingDir": "D:\\DEV\\Alpha",
+      "color": "#34d399",
+      "createdAt": "2026-05-02T09:00:00.000Z",
+      "tasks": [
+        {
+          "id": "task-a-01",
+          "title": "1. ติดตั้ง dependencies",
+          "description": "ติดตั้ง package ที่จำเป็นทั้งหมดผ่าน npm install",
+          "status": "done",
+          "priority": "high",
+          "tags": ["setup"],
+          "aiAgent": "Claude",
+          "model": "claude-haiku-4-5-20251001",
+          "prompt": "Run npm install and verify all packages are installed",
+          "lastSessionId": "sess-abc-001",
+          "runHistory": [
+            {
+              "runId": "run-001",
+              "timestamp": "2026-05-02T09:10:00.000Z",
+              "model": "claude-haiku-4-5-20251001",
+              "sessionId": "sess-abc-001",
+              "summary": "ติดตั้ง dependencies สำเร็จ"
+            }
+          ],
+          "lastNote": {
+            "timestamp": "2026-05-02T09:10:00.000Z",
+            "agent": "Claude",
+            "summary": "ติดตั้ง dependencies สำเร็จ ทุก package พร้อมใช้งาน"
+          },
+          "reviews": [
+            {
+              "reviewer": "Manual",
+              "timestamp": "2026-05-02T09:30:00.000Z",
+              "decision": "approved",
+              "comment": "ผ่าน"
+            }
+          ],
+          "filesModified": ["package.json", "package-lock.json"],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-02T09:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            },
+            {
+              "timestamp": "2026-05-02T09:10:00.000Z",
+              "agent": "Claude",
+              "action": "changed status from todo to pending_review: ติดตั้ง dependencies สำเร็จ"
+            },
+            {
+              "timestamp": "2026-05-02T09:30:00.000Z",
+              "agent": "Manual",
+              "action": "changed status from pending_review to done"
+            }
+          ],
+          "createdAt": "2026-05-02T09:00:00.000Z",
+          "updatedAt": "2026-05-02T09:30:00.000Z",
+          "completedAt": "2026-05-02T09:30:00.000Z"
+        },
+        {
+          "id": "task-a-02",
+          "title": "2. เขียน unit tests",
+          "description": "เขียน unit tests ครอบคลุม core functions ทั้งหมด",
+          "status": "in_progress",
+          "priority": "high",
+          "tags": ["testing"],
+          "aiAgent": "Claude",
+          "model": "claude-sonnet-4-6",
+          "prompt": "Write comprehensive unit tests for all core functions in src/",
+          "lastSessionId": null,
+          "runHistory": [],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-02T09:35:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            },
+            {
+              "timestamp": "2026-05-02T09:40:00.000Z",
+              "agent": "Claude",
+              "action": "changed status from todo to in_progress"
+            }
+          ],
+          "createdAt": "2026-05-02T09:35:00.000Z",
+          "updatedAt": "2026-05-02T09:40:00.000Z"
+        },
+        {
+          "id": "task-a-03",
+          "title": "3. เขียน documentation",
+          "description": "เขียน README และ API docs",
+          "status": "todo",
+          "priority": "medium",
+          "tags": ["docs"],
+          "aiAgent": "Claude",
+          "model": "claude-sonnet-4-6",
+          "prompt": "Write README.md and API documentation",
+          "lastSessionId": null,
+          "runHistory": [],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-02T09:35:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            }
+          ],
+          "createdAt": "2026-05-02T09:35:00.000Z"
+        }
+      ]
+    }
+  ]
+}

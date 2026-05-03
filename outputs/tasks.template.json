@@ -1,0 +1,44 @@
+{
+  "version": "1.0",
+  "lastUpdated": "1970-01-01T00:00:00.000Z",
+  "_instructions": {
+    "forAI": "เมื่อทำงานเสร็จแต่ละ session ให้สร้างไฟล์ patch ใน folder patches/ แทนการแก้ tasks.json โดยตรง ดูรูปแบบใน _patchPattern",
+    "patchPattern": {
+      "description": "สร้างไฟล์ JSON ใน patches/ ชื่อ YYYY-MM-DDTHH-MM-SS_AgentName.json เช่น 2026-05-02T10-30-00_Claude.json",
+      "changeTypes": {
+        "status_change": "{ type, projectId, taskId, from, to, note? }",
+        "add_task": "{ type, projectId, parentTaskId (null=root), task: { full task object } }",
+        "update_task": "{ type, projectId, taskId, updates: { field: value }, note? } — แก้ field allowlist: title, description, priority, agentId, aiAgent, model, prompt, tags",
+        "files_modified": "{ type, projectId, taskId, files: [\"path1\", \"path2\"] }",
+        "add_log": "{ type, projectId, taskId, log: { timestamp, agent, action } }"
+      },
+      "example": {
+        "version": "1.0",
+        "timestamp": "2026-05-02T10:30:00.000Z",
+        "agent": "Claude",
+        "changes": [
+          {
+            "type": "status_change",
+            "projectId": "proj-001",
+            "taskId": "task-002",
+            "from": "in_progress",
+            "to": "pending_review",
+            "note": "สร้าง dashboard.html เสร็จแล้ว"
+          },
+          {
+            "type": "files_modified",
+            "projectId": "proj-001",
+            "taskId": "task-002",
+            "files": [
+              "outputs/dashboard.html",
+              "outputs/tasks.json"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "projects": [],
+  "agents": [],
+  "appliedPatches": []
+}

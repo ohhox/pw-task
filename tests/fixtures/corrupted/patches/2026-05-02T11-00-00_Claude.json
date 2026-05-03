@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-02T11:00:00.000Z",
+  "agent": "Claude",
+  "changes": [
+    {
+      "type": "status_change",
+      "projectId": "proj-corrupt-001",
+      "taskId": "task-does-not-exist",
+      "from": "todo",
+      "to": "done",
+      "note": "patch ที่อ้างถึง taskId ที่ไม่มีอยู่ใน tasks.json"
+    }
+  ]
+}

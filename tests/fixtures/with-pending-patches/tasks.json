@@ -1,0 +1,85 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-05-02T08:00:00.000Z",
+  "_instructions": {
+    "forAI": "เมื่อทำงานเสร็จแต่ละ session ให้สร้างไฟล์ patch ใน folder patches/ แทนการแก้ tasks.json โดยตรง",
+    "patchPattern": {
+      "description": "สร้างไฟล์ JSON ใน patches/ ชื่อ YYYY-MM-DDTHH-MM-SS_AgentName.json",
+      "changeTypes": {
+        "status_change": "{ type, projectId, taskId, from, to, note? }",
+        "add_task": "{ type, projectId, parentTaskId (null=root), task: { full task object } }",
+        "files_modified": "{ type, projectId, taskId, files: [\"path1\"] }",
+        "add_log": "{ type, projectId, taskId, log: { timestamp, agent, action } }"
+      }
+    }
+  },
+  "projects": [
+    {
+      "id": "proj-patch-001",
+      "name": "Patch Test Project",
+      "description": "tasks.json ก่อน apply patches — dashboard ต้อง merge patches เพื่อได้ state ล่าสุด",
+      "goal": "ทดสอบ patch apply logic ทุกประเภท",
+      "workingDir": "D:\\DEV\\PatchTest",
+      "color": "#f97316",
+      "createdAt": "2026-05-02T08:00:00.000Z",
+      "tasks": [
+        {
+          "id": "task-p-01",
+          "title": "Task ที่จะถูกเปลี่ยน status โดย patch",
+          "description": "ตอนนี้ status=in_progress แต่หลัง apply patch จะเป็น pending_review",
+          "status": "in_progress",
+          "priority": "high",
+          "tags": [],
+          "aiAgent": "Claude",
+          "model": "claude-sonnet-4-6",
+          "prompt": "Implement the feature",
+          "lastSessionId": "sess-p-001",
+          "runHistory": [],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-02T08:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            },
+            {
+              "timestamp": "2026-05-02T09:00:00.000Z",
+              "agent": "Claude",
+              "action": "changed status from todo to in_progress"
+            }
+          ],
+          "createdAt": "2026-05-02T08:00:00.000Z",
+          "updatedAt": "2026-05-02T09:00:00.000Z"
+        },
+        {
+          "id": "task-p-02",
+          "title": "Task ที่จะได้รับ filesModified จาก patch",
+          "description": "ยังไม่มี filesModified แต่หลัง apply patch จะมีไฟล์ที่แก้ไข",
+          "status": "pending_review",
+          "priority": "medium",
+          "tags": [],
+          "aiAgent": "Claude",
+          "model": "claude-haiku-4-5-20251001",
+          "prompt": "Write tests",
+          "lastSessionId": null,
+          "runHistory": [],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-02T08:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            }
+          ],
+          "createdAt": "2026-05-02T08:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}

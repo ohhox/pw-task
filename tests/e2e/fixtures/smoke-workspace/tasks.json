@@ -1,0 +1,107 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-05-02T10:00:00.000Z",
+  "_instructions": {
+    "forAI": "E2E smoke fixture — copied to a temp workspace before each test run.",
+    "patchPattern": {
+      "description": "สร้างไฟล์ JSON ใน patches/ ชื่อ YYYY-MM-DDTHH-MM-SS_AgentName.json",
+      "changeTypes": {
+        "status_change": "{ type, projectId, taskId, from, to, note? }",
+        "add_task": "{ type, projectId, parentTaskId (null=root), task: { full task object } }",
+        "files_modified": "{ type, projectId, taskId, files: [\"path1\", \"path2\"] }",
+        "add_log": "{ type, projectId, taskId, log: { timestamp, agent, action } }"
+      }
+    }
+  },
+  "projects": [
+    {
+      "id": "proj-smoke-001",
+      "name": "Smoke Project",
+      "description": "Fixture สำหรับ E2E smoke test",
+      "goal": "ใช้ตรวจ workflow โหลด workspace + sync patch + restart",
+      "workingDir": "D:\\DEV\\Smoke",
+      "color": "#34d399",
+      "createdAt": "2026-05-02T09:00:00.000Z",
+      "tasks": [
+        {
+          "id": "task-s-01",
+          "title": "1. ตรวจการโหลด project",
+          "description": "Task แรกของ fixture — ใช้ตรวจว่า project list และ task tree render ถูก",
+          "status": "in_progress",
+          "priority": "high",
+          "tags": ["smoke"],
+          "aiAgent": "Claude",
+          "model": "claude-sonnet-4-6",
+          "prompt": "no-op",
+          "lastSessionId": null,
+          "runHistory": [],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-02T09:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            }
+          ],
+          "createdAt": "2026-05-02T09:00:00.000Z",
+          "updatedAt": "2026-05-02T09:00:00.000Z"
+        },
+        {
+          "id": "task-s-02",
+          "title": "2. ตรวจการ apply patch ผ่าน sync",
+          "description": "Task ที่ E2E test จะส่ง patch มาเปลี่ยน status เป็น pending_review",
+          "status": "todo",
+          "priority": "high",
+          "tags": ["smoke"],
+          "aiAgent": "Claude",
+          "model": "claude-sonnet-4-6",
+          "prompt": "no-op",
+          "lastSessionId": null,
+          "runHistory": [],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-02T09:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            }
+          ],
+          "createdAt": "2026-05-02T09:00:00.000Z",
+          "updatedAt": "2026-05-02T09:00:00.000Z"
+        },
+        {
+          "id": "task-s-03",
+          "title": "3. ตรวจการ apply patch ตอน restart",
+          "description": "Task ที่ E2E test จะส่ง patch ก่อน restart แล้วตรวจว่าโดน apply อัตโนมัติ",
+          "status": "todo",
+          "priority": "medium",
+          "tags": ["smoke"],
+          "aiAgent": "Claude",
+          "model": "claude-sonnet-4-6",
+          "prompt": "no-op",
+          "lastSessionId": null,
+          "runHistory": [],
+          "lastNote": null,
+          "reviews": [],
+          "filesModified": [],
+          "subtasks": [],
+          "activityLog": [
+            {
+              "timestamp": "2026-05-02T09:00:00.000Z",
+              "agent": "Manual",
+              "action": "created task"
+            }
+          ],
+          "createdAt": "2026-05-02T09:00:00.000Z",
+          "updatedAt": "2026-05-02T09:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}
