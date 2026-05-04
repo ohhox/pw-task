@@ -261,6 +261,39 @@ body {
 .view-tab svg { width: 13px; height: 13px; }
 .view-tab[title*="Coming"]:not(.active) { opacity: 0.55; }
 
+/* tab bar — project actions + task controls */
+.tab-sep {
+  display: flex; align-items: center; gap: 2px;
+  border-left: 1px solid var(--border); margin-left: 6px; padding-left: 6px; align-self: center;
+}
+.tab-action-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 9px; border-radius: var(--radius-sm); border: 1px solid transparent;
+  background: transparent; cursor: pointer; font-family: inherit;
+  font-size: 12px; color: var(--text-2); white-space: nowrap;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+.tab-action-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border); }
+.tab-action-btn.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(var(--accent-rgb),.3); }
+.tab-action-btn--accent { color: var(--accent); }
+.tab-action-btn--accent:hover { background: var(--accent-dim); border-color: rgba(var(--accent-rgb),.3); }
+.tab-action-btn--primary {
+  background: var(--accent); color: #fff; border-color: transparent; font-weight: 500;
+}
+.tab-action-btn--primary:hover { background: var(--accent-dark, var(--accent)); filter: brightness(1.1); }
+.tab-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: var(--radius-sm); border: none;
+  background: transparent; cursor: pointer; color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+.tab-icon-btn:hover { background: var(--surface2); color: var(--text); }
+.tab-icon-btn--danger:hover { background: rgba(var(--red-rgb),.1); color: var(--red); }
+.tab-count {
+  font-size: 11px; color: var(--text-muted); padding: 0 6px; align-self: center;
+  white-space: nowrap;
+}
+
 /* ─── TOOLBAR 2 (filter pills) ─── */
 .toolbar2 {
   display: flex; align-items: center; gap: 8px;
@@ -880,6 +913,29 @@ svg { display: block; }
 .brand-name { font-weight: 600; font-size: 15px; color: var(--text); }
 .topbar-spacer { flex: 1; }
 
+/* topbar project info */
+.topbar-project {
+  display: flex; align-items: center; gap: 8px;
+  border-left: 1px solid var(--border); padding-left: 14px; margin-left: 4px;
+  min-width: 0; flex: 1;
+}
+.topbar-proj-dot {
+  width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0;
+}
+.topbar-proj-info {
+  display: flex; flex-direction: column; min-width: 0;
+}
+.topbar-proj-name {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar-proj-desc {
+  font-size: 11px; color: var(--text-muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 320px;
+}
+.topbar-proj-desc:empty { display: none; }
+
 /* settings panel ─── */
 .settings-overlay {
   position: fixed; inset: 0; z-index: 1800;
@@ -965,10 +1021,10 @@ svg { display: block; }
 .placeholder-title { font-size: 16px; font-weight: 600; color: var(--text); margin-top: 8px; }
 .placeholder-desc  { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
 
-/* Task list view padding refinement (light mode) */
+/* Task list starts right after tab bar — compact top padding */
 #task-list-wrap {
   background: var(--bg);
-  padding: 16px 24px; min-height: 0;
+  padding: 10px 20px 20px; min-height: 0;
 }
 .new-task-btn {
   display: inline-flex; align-items: center; gap: 6px;

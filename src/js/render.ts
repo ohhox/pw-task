@@ -91,6 +91,11 @@ export function renderProject(): void {
     $('task-list').innerHTML = '';
     closeWorkspace();
     setSelectedTaskPath(null);
+    // Hide topbar project area and tab-bar project actions
+    const topbarProj = document.getElementById('topbar-project');
+    if (topbarProj) topbarProj.style.display = 'none';
+    const quickAct = document.getElementById('proj-quick-actions');
+    if (quickAct) quickAct.style.display = 'none';
     if (db && db.projects.length === 0) {
       showWelcome(
         `<p style="margin:0 0 12px;color:var(--text-2)">ยังไม่มี project — เริ่มต้นสร้าง project แรกได้เลย</p>` +
@@ -104,16 +109,25 @@ export function renderProject(): void {
     }
     return;
   }
-  // .proj-icon (id project-dot-big) shows the project's color block — fill the
-  // whole tile so it reads as the project mark.
-  $('project-dot-big').style.background = proj.color;
-  $('project-title-text').textContent = proj.name;
-  $('project-desc-text').textContent = proj.description || '';
-  $('project-goal-text').textContent = proj.goal || '';
-  $('project-workdir-text').textContent = proj.workingDir || '';
-  $('project-id-text').textContent = proj.id;
-  $('btn-terminal').style.display = proj.workingDir ? '' : 'none';
-  $('btn-run-project').style.display = proj.runCommand ? '' : 'none';
+
+  // Populate topbar project info
+  const topbarProj = document.getElementById('topbar-project');
+  if (topbarProj) topbarProj.style.display = '';
+  const dotEl = document.getElementById('topbar-proj-dot');
+  if (dotEl) dotEl.style.background = proj.color;
+  const nameEl = document.getElementById('topbar-proj-name');
+  if (nameEl) nameEl.textContent = proj.name;
+  const descEl = document.getElementById('topbar-proj-desc');
+  if (descEl) descEl.textContent = proj.description || '';
+
+  // Show project quick actions in tab bar
+  const quickAct = document.getElementById('proj-quick-actions');
+  if (quickAct) quickAct.style.display = '';
+  const termBtn = document.getElementById('btn-terminal');
+  if (termBtn) termBtn.style.display = proj.workingDir ? '' : 'none';
+  const runBtn = document.getElementById('btn-run-project');
+  if (runBtn) runBtn.style.display = proj.runCommand ? '' : 'none';
+
   renderTaskList();
   if (selectedTaskPath) renderDetail();
 }

@@ -84,8 +84,19 @@ export function closeWorkspace(): void {
 // ─── History renderer (injected to avoid fileops→render→history cycle) ────────
 initHistory(() => { renderSidebar(); renderProject(); });
 
+// ─── Filter bar toggle ────────────────────────────────────────────────────
+let _filtersOpen = false;
+function toggleFilterBar(): void {
+  _filtersOpen = !_filtersOpen;
+  const bar = document.getElementById('filters-bar');
+  if (bar) bar.style.display = _filtersOpen ? '' : 'none';
+  const btn = document.getElementById('btn-filter-toggle');
+  if (btn) btn.classList.toggle('active', _filtersOpen);
+}
+$('btn-filter-toggle').addEventListener('click', toggleFilterBar);
+
 // ─── Top-bar buttons ──────────────────────────────────────────────────────
-$('btn-open').addEventListener('click', openFolder);
+$('btn-open').addEventListener('click', () => { closeSettings(); openFolder(); });
 $('btn-open-welcome').addEventListener('click', openFolder);
 $('btn-save').addEventListener('click', saveFile);
 $('btn-archive').addEventListener('click', archiveDoneTasks);
@@ -174,9 +185,10 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'n' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); showAddTaskModal(null); return; }
   if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
     e.preventDefault();
-    // Focus list-view search input if visible, else open palette
+    // Open filter bar if hidden, then focus search
+    if (!_filtersOpen) toggleFilterBar();
     const si = document.getElementById('search-input') as HTMLInputElement | null;
-    if (si && si.offsetParent !== null) { si.focus(); si.select(); } else { openPalette(); }
+    if (si) { si.focus(); si.select(); }
     return;
   }
 });

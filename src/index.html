@@ -9,44 +9,53 @@
 <body>
 <div id="app">
 
-  <!-- ── TOPBAR (minimal) ──────────────────────────────────────────────── -->
+  <!-- ── TOPBAR ──────────────────────────────────────────────────────────── -->
   <header class="topbar">
     <div class="brand">
       <div class="brand-mark">P</div>
       <div class="brand-name">PwTask</div>
     </div>
+
+    <!-- Project name + desc shown here when a project is active -->
+    <div id="topbar-project" class="topbar-project" style="display:none">
+      <div id="topbar-proj-dot" class="topbar-proj-dot"></div>
+      <div class="topbar-proj-info">
+        <span id="topbar-proj-name" class="topbar-proj-name"></span>
+        <span id="topbar-proj-desc" class="topbar-proj-desc"></span>
+      </div>
+    </div>
+
     <span class="topbar-spacer"></span>
     <span id="save-status"></span>
-    <button class="btn-primary" id="btn-save" title="Save (Ctrl+S)" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    <button class="btn-primary btn-sm" id="btn-save" title="Save (Ctrl+S)" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
       Save
     </button>
-    <button class="icon-btn" id="btn-settings" title="Settings & Tools">
+    <button class="icon-btn" id="btn-settings" title="Settings & Tools (⚙)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
   </header>
 
-  <!-- ── BODY ─────────────────────────────────────────────────────────── -->
+  <!-- ── BODY ─────────────────────────────────────────────────────────────── -->
   <div class="body">
 
-    <!-- ── SIDEBAR (Projects + Summary only) ─────────────────────────── -->
+    <!-- ── SIDEBAR (Projects + Summary only) ──────────────────────────── -->
     <aside class="sidebar">
       <div class="side-section">
         <div class="side-label">Projects</div>
         <div id="project-list"></div>
         <button class="sidebar-add-btn" id="btn-add-project" type="button">＋ New Project</button>
       </div>
-
       <div id="sidebar-summary">
         <div class="summary-title">Summary</div>
         <div id="summary-rows"></div>
       </div>
     </aside>
 
-    <!-- ── MAIN ────────────────────────────────────────────────────── -->
+    <!-- ── MAIN ──────────────────────────────────────────────────────── -->
     <main class="main">
 
-      <!-- WELCOME (shown when no project loaded) -->
+      <!-- WELCOME -->
       <div id="welcome">
         <div class="welcome-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:56px;height:56px;color:var(--accent)"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
@@ -60,11 +69,12 @@
         </div>
       </div>
 
-      <!-- PROJECT VIEW (shown when project active) -->
+      <!-- PROJECT VIEW -->
       <div id="project-view" style="display:none">
 
-        <!-- VIEW TABS — at the very top of content area -->
+        <!-- TAB BAR — view tabs + project actions + task controls -->
         <div class="view-tabs" id="view-tabs">
+          <!-- View switcher -->
           <button class="view-tab active" data-view="list" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             List
@@ -81,52 +91,47 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Calendar
           </button>
-          <span style="flex:1"></span>
-          <span class="toolbar2-count" id="task-count-display" style="padding:0 12px;font-size:12px;color:var(--text-muted);align-self:center"></span>
-        </div>
 
-        <!-- PROJECT HEADER (title + actions, no tabs) -->
-        <div class="proj-header">
-          <div class="proj-title-row">
-            <div class="proj-icon" id="project-dot-big"></div>
-            <div class="proj-title-block">
-              <h1 class="proj-title" id="project-title-text"></h1>
-              <div class="proj-meta-line">
-                <span id="project-desc-text"></span>
-                <span id="project-goal-text"></span>
-                <span id="project-workdir-text"></span>
-                <span id="project-id-text"></span>
-              </div>
-            </div>
-
-            <div class="proj-actions">
-              <button class="btn-secondary" id="btn-run-project" type="button" style="display:none" title="Run project command">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>
-                Run
-              </button>
-              <button class="btn-secondary" id="btn-terminal" type="button" style="display:none" title="Open terminal here">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-                Terminal
-              </button>
-              <button class="btn-accent-soft" id="btn-plan-project" type="button" title="Plan project tasks with AI">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
-                Plan with AI
-              </button>
-              <button class="icon-btn" id="btn-edit-project" type="button" title="Edit project">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-              <button class="icon-btn" id="btn-export-claude" type="button" title="Generate CLAUDE.md">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              </button>
-              <button class="icon-btn icon-btn--danger" id="btn-delete-project" type="button" title="Delete project">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
-            </div>
+          <!-- Project actions (hidden when no project) -->
+          <div class="tab-sep" id="proj-quick-actions" style="display:none">
+            <button class="tab-action-btn" id="btn-run-project" style="display:none" title="Run project command">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/></svg>
+              Run
+            </button>
+            <button class="tab-action-btn" id="btn-terminal" style="display:none" title="Open terminal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+              Terminal
+            </button>
+            <button class="tab-action-btn tab-action-btn--accent" id="btn-plan-project" title="Plan with AI">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/></svg>
+              Plan
+            </button>
+            <button class="tab-icon-btn" id="btn-edit-project" title="Edit project">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="tab-icon-btn" id="btn-export-claude" title="Generate CLAUDE.md">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </button>
+            <button class="tab-icon-btn tab-icon-btn--danger" id="btn-delete-project" title="Delete project">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
           </div>
+
+          <span style="flex:1"></span>
+
+          <!-- Task controls -->
+          <button class="tab-action-btn" id="btn-filter-toggle" title="Show/hide filters">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            Filter
+          </button>
+          <button class="tab-action-btn tab-action-btn--primary" id="btn-add-task" type="button">
+            ＋ New Task
+          </button>
+          <span class="tab-count" id="task-count-display"></span>
         </div>
 
-        <!-- TOOLBAR 2 (filters) -->
-        <div class="toolbar2" id="filters-bar">
+        <!-- FILTER BAR (hidden by default) -->
+        <div class="toolbar2" id="filters-bar" style="display:none">
           <div class="search-pill">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input id="search-input" placeholder="Search tasks…" type="text">
@@ -162,7 +167,6 @@
         <!-- VIEW CONTAINERS -->
         <div class="content-area">
           <div class="view-pane" id="task-list-view">
-            <!-- BULK ACTION BAR -->
             <div id="bulk-bar" class="bulk-bar" style="display:none">
               <span class="bulk-bar-info"><span id="bulk-count">0</span> selected</span>
               <div class="bulk-bar-actions">
@@ -173,7 +177,6 @@
               <button class="btn-sm btn-ghost" id="bulk-cancel" type="button">Cancel</button>
             </div>
             <div id="task-list-wrap">
-              <button class="new-task-btn" id="btn-add-task" type="button">＋ New Task</button>
               <div id="task-list"></div>
             </div>
           </div>
@@ -186,7 +189,6 @@
             <div class="placeholder-card">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--text-3)"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="13" y2="18"/></svg>
               <div class="placeholder-title">Timeline view — coming soon</div>
-              <div class="placeholder-desc">Gantt-lite timeline based on createdAt + estimated duration.</div>
             </div>
           </div>
 
@@ -194,11 +196,10 @@
             <div class="placeholder-card">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;color:var(--text-3)"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               <div class="placeholder-title">Calendar view — coming soon</div>
-              <div class="placeholder-desc">Month grid with tasks placed by createdAt.</div>
             </div>
           </div>
 
-          <!-- DETAIL DRAWER (slides in from right) -->
+          <!-- DETAIL DRAWER -->
           <aside id="detail-panel" class="detail-drawer" style="display:none">
             <div id="detail-header">
               <button class="ws-back-btn" id="detail-close" type="button" title="Close (Esc)">
@@ -215,12 +216,10 @@
   </div>
 </div>
 
-<!-- DRAWER BACKDROP (clicks close drawer) -->
 <div id="drawer-backdrop" class="drawer-backdrop" style="display:none"></div>
-
 <div id="toast"></div>
 
-<!-- SETTINGS PANEL (⚙ — slides from right) -->
+<!-- SETTINGS PANEL -->
 <div id="settings-overlay" class="settings-overlay" style="display:none">
   <div class="settings-drawer">
     <div class="settings-hd">
@@ -228,7 +227,6 @@
       <button class="settings-close-btn" id="settings-close" type="button">✕</button>
     </div>
     <div class="settings-body">
-
       <div class="settings-group-lbl">Workspace</div>
       <button class="settings-item-btn" id="btn-open" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
@@ -256,7 +254,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Manage agents
       </button>
-
     </div>
   </div>
 </div>
@@ -278,7 +275,7 @@
   </div>
 </div>
 
-<!-- KEYBOARD HELP OVERLAY (?) -->
+<!-- KEYBOARD HELP (?) -->
 <div id="help-overlay" class="palette-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
   <div class="help-dialog">
     <div class="help-header">
@@ -290,29 +287,20 @@
         <div class="help-section-title">Global</div>
         <div class="help-row"><kbd>⌘K</kbd><span>Command palette</span></div>
         <div class="help-row"><kbd>⌘S</kbd><span>Save</span></div>
-        <div class="help-row"><kbd>⌘Z</kbd><span>Undo</span></div>
-        <div class="help-row"><kbd>⌘Y</kbd><span>Redo</span></div>
+        <div class="help-row"><kbd>⌘Z / ⌘Y</kbd><span>Undo / Redo</span></div>
         <div class="help-row"><kbd>?</kbd><span>Show this help</span></div>
         <div class="help-row"><kbd>Esc</kbd><span>Close panel / modal</span></div>
       </div>
       <div class="help-section">
-        <div class="help-section-title">Navigation</div>
+        <div class="help-section-title">Tasks</div>
         <div class="help-row"><kbd>N</kbd><span>New task</span></div>
         <div class="help-row"><kbd>/</kbd><span>Focus search</span></div>
-      </div>
-      <div class="help-section">
-        <div class="help-section-title">Palette</div>
-        <div class="help-row"><kbd>↑↓</kbd><span>Navigate results</span></div>
-        <div class="help-row"><kbd>↵</kbd><span>Open selected</span></div>
-        <div class="help-row"><kbd>&gt;</kbd><span>Action mode</span></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- marked: Markdown renderer (~25KB gzipped) — loaded from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
-<!-- ES Modules: dependency graph resolved via import statements; load order auto-managed -->
 <script type="module" src="js/main.js"></script>
 </body>
 </html>
