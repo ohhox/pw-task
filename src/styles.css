@@ -543,6 +543,12 @@ body {
   cursor: pointer; font-family: monospace; transition: all var(--transition); white-space: nowrap; overflow: hidden; max-width: 200px; text-overflow: ellipsis;
 }
 .ws-id-btn:hover { color: var(--text); border-color: var(--border2); }
+.ws-ctx-btn {
+  padding: 4px 10px; border-radius: 99px; font-size: 11px;
+  border: 1px solid rgba(var(--accent-rgb), 0.35); background: rgba(var(--accent-rgb), 0.08);
+  color: var(--accent); cursor: pointer; white-space: nowrap; transition: all var(--transition);
+}
+.ws-ctx-btn:hover { background: rgba(var(--accent-rgb), 0.18); border-color: rgba(var(--accent-rgb), 0.55); }
 .ws-sep { border: none; border-top: 1px solid var(--border); margin: 8px 0 20px; }
 .ws-section-label {
   font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;

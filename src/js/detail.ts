@@ -125,10 +125,48 @@ export function renderDetail() {
   idBtn.addEventListener('click', () => {
     navigator.clipboard.writeText(task.id).then(() => { idBtn.textContent = '✓ Copied'; setTimeout(() => { idBtn.textContent = task.id; }, 1500); });
   });
+
+  const ctxBtn = document.createElement('button'); ctxBtn.className = 'ws-ctx-btn';
+  ctxBtn.textContent = '📋 Copy for AI'; ctxBtn.title = 'Copy full task context as Markdown — paste into any AI chat to share context';
+  ctxBtn.addEventListener('click', () => {
+    const agentLabel = curAgent.label;
+    const modelLabel = task.model ? modelShortName(task.model) : `auto (${modelShortName(curAgent.defaultModel || 'claude-sonnet-4-6')})`;
+    const subs = task.subtasks || [];
+    const subLines = subs.map(s => `- [${s.status === 'done' ? 'x' : ' '}] ${s.title}${s.status !== 'todo' && s.status !== 'done' ? ` *(${statusLabel(s.status)})*` : ''}`).join('\n');
+    const doneCount = subs.filter(s => s.status === 'done').length;
+
+    const lines: string[] = [
+      `## Task: [${task.id}] ${task.title}`,
+      `**Project**: ${proj?.name || ''} · \`${proj?.id || activeProjectId}\``,
+      `**Status**: ${statusLabel(task.status)} · **Priority**: ${task.priority || 'medium'}`,
+      `**Agent**: ${agentLabel} · **Model**: ${modelLabel}`,
+    ];
+    if (proj?.workingDir) lines.push(`**Working Dir**: \`${proj.workingDir}\``);
+    if (task.description?.trim()) {
+      lines.push('', '### Description', task.description.trim());
+    }
+    if (task.prompt?.trim()) {
+      lines.push('', '### Prompt', task.prompt.trim());
+    }
+    if (subs.length) {
+      lines.push('', `### Subtasks (${doneCount}/${subs.length} done)`, subLines);
+    }
+    if (task.lastNote?.summary) {
+      lines.push('', '### Last Session Note', `*${agentLabel} · ${fmtDate(task.lastNote.timestamp)}*`, task.lastNote.summary.trim());
+    }
+
+    const text = lines.join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      ctxBtn.textContent = '✓ Copied!';
+      setTimeout(() => { ctxBtn.textContent = '📋 Copy for AI'; }, 1800);
+    });
+  });
+
   toolbar.appendChild(statusChip); toolbar.appendChild(priorityChip);
   toolbar.appendChild(agentChip); toolbar.appendChild(modelChip);
   const sp = document.createElement('span'); sp.style.flex = '1'; toolbar.appendChild(sp);
   toolbar.appendChild(idBtn);
+  toolbar.appendChild(ctxBtn);
   body.appendChild(toolbar);
 
   // ── description accordion ──────────────────────────────────────────────
