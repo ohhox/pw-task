@@ -225,14 +225,4 @@ export function initPalette(): void {
     }
   });
 
-  // Topbar search box click → open palette
-  document.getElementById('topbar-search')?.addEventListener('click', (e) => {
-    // Prevent double-fire if child input was clicked
-    e.preventDefault();
-    openPalette();
-  });
-  document.getElementById('topbar-search-input')?.addEventListener('focus', (e) => {
-    (e.target as HTMLInputElement).blur();
-    openPalette();
-  });
 }

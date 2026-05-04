@@ -9,89 +9,32 @@
 <body>
 <div id="app">
 
-  <!-- ── TOPBAR ───────────────────────────────────────────────────────── -->
+  <!-- ── TOPBAR (minimal) ──────────────────────────────────────────────── -->
   <header class="topbar">
     <div class="brand">
       <div class="brand-mark">P</div>
       <div class="brand-name">PwTask</div>
     </div>
-
-    <div class="search-box" id="topbar-search">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="topbar-search-input" placeholder="Search tasks, projects, agents…" type="text">
-      <kbd class="kbd-hint">⌘K</kbd>
-    </div>
-
     <span class="topbar-spacer"></span>
-
     <span id="save-status"></span>
-
-    <button class="icon-btn" id="btn-archive" title="Archive done tasks" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
-    </button>
-    <button class="icon-btn" id="btn-sync" title="Check for new patches" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-    </button>
-    <button class="icon-btn" id="btn-font-size" title="Font size">A</button>
-    <button class="icon-btn" id="btn-agent-mgr" title="Manage agents">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
-    <button class="icon-btn" id="btn-open" title="Change project folder">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-    </button>
-    <button class="btn-primary" id="btn-save" title="Save changes (Ctrl+S)" style="display:none">
+    <button class="btn-primary" id="btn-save" title="Save (Ctrl+S)" style="display:none">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
       Save
     </button>
-
-    <div class="avatar-wrap" title="You">
-      <div class="avatar avatar--user">U</div>
-    </div>
+    <button class="icon-btn" id="btn-settings" title="Settings & Tools">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
   </header>
 
   <!-- ── BODY ─────────────────────────────────────────────────────────── -->
   <div class="body">
 
-    <!-- ── SIDEBAR ─────────────────────────────────────────────────── -->
+    <!-- ── SIDEBAR (Projects + Summary only) ─────────────────────────── -->
     <aside class="sidebar">
-      <div class="side-section">
-        <div class="side-label">Workspace</div>
-        <button class="side-item is-disabled" type="button" title="Coming soon">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          </span>
-          Home
-        </button>
-        <button class="side-item is-disabled" type="button" title="Coming soon">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-          </span>
-          Inbox
-          <span class="count" id="sidebar-pending-count">0</span>
-        </button>
-        <button class="side-item is-disabled" type="button" title="Coming soon">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 16s1 1 3 1 3-1 3-1"/></svg>
-          </span>
-          Agent runs
-          <span class="count" id="sidebar-runs-count">0</span>
-        </button>
-      </div>
-
       <div class="side-section">
         <div class="side-label">Projects</div>
         <div id="project-list"></div>
         <button class="sidebar-add-btn" id="btn-add-project" type="button">＋ New Project</button>
-      </div>
-
-      <div class="side-section side-section--collapsed">
-        <div class="side-label">Saved views</div>
-        <div class="side-item is-disabled" title="Coming in U4">
-          <span class="ico">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          </span>
-          (none yet)
-        </div>
       </div>
 
       <div id="sidebar-summary">
@@ -120,7 +63,29 @@
       <!-- PROJECT VIEW (shown when project active) -->
       <div id="project-view" style="display:none">
 
-        <!-- PROJECT HEADER -->
+        <!-- VIEW TABS — at the very top of content area -->
+        <div class="view-tabs" id="view-tabs">
+          <button class="view-tab active" data-view="list" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            List
+          </button>
+          <button class="view-tab" data-view="board" type="button" title="Coming soon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="18" rx="1"/><rect x="11" y="3" width="6" height="12" rx="1"/><rect x="19" y="3" width="2" height="6" rx="1"/></svg>
+            Board
+          </button>
+          <button class="view-tab" data-view="timeline" type="button" title="Coming soon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="13" y2="18"/></svg>
+            Timeline
+          </button>
+          <button class="view-tab" data-view="calendar" type="button" title="Coming soon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Calendar
+          </button>
+          <span style="flex:1"></span>
+          <span class="toolbar2-count" id="task-count-display" style="padding:0 12px;font-size:12px;color:var(--text-muted);align-self:center"></span>
+        </div>
+
+        <!-- PROJECT HEADER (title + actions, no tabs) -->
         <div class="proj-header">
           <div class="proj-title-row">
             <div class="proj-icon" id="project-dot-big"></div>
@@ -158,25 +123,6 @@
               </button>
             </div>
           </div>
-
-          <div class="view-tabs" id="view-tabs">
-            <button class="view-tab active" data-view="list" type="button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              List
-            </button>
-            <button class="view-tab" data-view="board" type="button" title="Coming soon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="18" rx="1"/><rect x="11" y="3" width="6" height="12" rx="1"/><rect x="19" y="3" width="2" height="6" rx="1"/></svg>
-              Board
-            </button>
-            <button class="view-tab" data-view="timeline" type="button" title="Coming soon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="13" y2="18"/></svg>
-              Timeline
-            </button>
-            <button class="view-tab" data-view="calendar" type="button" title="Coming soon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              Calendar
-            </button>
-          </div>
         </div>
 
         <!-- TOOLBAR 2 (filters) -->
@@ -211,7 +157,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="5" width="4" height="4" rx="1"/><rect x="3" y="12" width="4" height="4" rx="1"/><rect x="3" y="19" width="4" height="4" rx="1"/><line x1="10" y1="7" x2="21" y2="7"/><line x1="10" y1="14" x2="21" y2="14"/><line x1="10" y1="21" x2="21" y2="21"/></svg>
             Select
           </button>
-          <span class="toolbar2-count" id="task-count-display"></span>
         </div>
 
         <!-- VIEW CONTAINERS -->
@@ -274,6 +219,47 @@
 <div id="drawer-backdrop" class="drawer-backdrop" style="display:none"></div>
 
 <div id="toast"></div>
+
+<!-- SETTINGS PANEL (⚙ — slides from right) -->
+<div id="settings-overlay" class="settings-overlay" style="display:none">
+  <div class="settings-drawer">
+    <div class="settings-hd">
+      <span>Settings &amp; Tools</span>
+      <button class="settings-close-btn" id="settings-close" type="button">✕</button>
+    </div>
+    <div class="settings-body">
+
+      <div class="settings-group-lbl">Workspace</div>
+      <button class="settings-item-btn" id="btn-open" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Change Folder…
+      </button>
+
+      <div class="settings-group-lbl">Data</div>
+      <button class="settings-item-btn" id="btn-archive" style="display:none" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+        Archive done tasks
+      </button>
+      <button class="settings-item-btn" id="btn-sync" style="display:none" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Sync patches
+      </button>
+
+      <div class="settings-group-lbl">Display</div>
+      <div class="settings-item-row">
+        <span class="settings-item-lbl">Font size</span>
+        <button class="settings-cycle-btn" id="btn-font-size" type="button">A</button>
+      </div>
+
+      <div class="settings-group-lbl">Agents</div>
+      <button class="settings-item-btn" id="btn-agent-mgr" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Manage agents
+      </button>
+
+    </div>
+  </div>
+</div>
 
 <!-- COMMAND PALETTE (⌘K) -->
 <div id="palette-overlay" class="palette-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Command palette">

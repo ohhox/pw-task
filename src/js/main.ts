@@ -157,8 +157,9 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openPalette(); return; }
 
   if (e.key === 'Escape') {
-    // Close in z-order: palette → modal → drawer
+    // Close in z-order: palette → settings → help → modal → drawer
     if (document.getElementById('palette-overlay')?.style.display !== 'none') { closePalette(); return; }
+    if (document.getElementById('settings-overlay')?.style.display !== 'none') { closeSettings(); return; }
     if (document.getElementById('help-overlay')?.style.display !== 'none') { closeHelp(); return; }
     const modal = document.querySelector('.modal-overlay');
     if (modal) { modal.remove(); return; }
@@ -207,21 +208,39 @@ viewTabs?.addEventListener('click', (e) => {
   if (target === 'board') renderBoard();
 });
 
-// ─── Sync button ──────────────────────────────────────────────────────────
+// ─── Sync button (now in settings panel) ──────────────────────────────────
 $<HTMLButtonElement>('btn-sync').addEventListener('click', async () => {
   const btn = $<HTMLButtonElement>('btn-sync');
-  btn.textContent = '⏳ Syncing…';
   btn.disabled = true;
+  btn.style.opacity = '0.55';
   await checkPatches();
-  btn.textContent = '🔄 Sync';
   btn.disabled = false;
+  btn.style.opacity = '';
 });
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') checkPatches();
 });
 
-$('btn-agent-mgr').addEventListener('click', showAgentManagerModal);
+$('btn-agent-mgr').addEventListener('click', () => { closeSettings(); showAgentManagerModal(); });
+
+// ─── Settings panel ───────────────────────────────────────────────────────
+function openSettings(): void {
+  const el = document.getElementById('settings-overlay');
+  if (el) el.style.display = 'flex';
+}
+function closeSettings(): void {
+  const el = document.getElementById('settings-overlay');
+  if (el) el.style.display = 'none';
+}
+$('btn-settings').addEventListener('click', () => {
+  const el = document.getElementById('settings-overlay');
+  if (el && el.style.display !== 'none') { closeSettings(); } else { openSettings(); }
+});
+document.getElementById('settings-close')?.addEventListener('click', closeSettings);
+document.getElementById('settings-overlay')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('settings-overlay')) closeSettings();
+});
 
 // ─── Font size toggle ─────────────────────────────────────────────────────
 type FsKey = 'fs-s' | 'fs-m' | 'fs-l';
