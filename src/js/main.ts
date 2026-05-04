@@ -9,7 +9,7 @@ import {
   openFolder, saveFile, archiveDoneTasks, checkPatches, tryRestoreDir,
 } from './fileops.js';
 import {
-  renderTaskList, refreshAgentFilter, initTaskListEvents,
+  renderSidebar, renderProject, renderTaskList, refreshAgentFilter, initTaskListEvents,
 } from './render.js';
 import { renderBoard, initBoardEvents } from './board.js';
 import {
@@ -18,6 +18,14 @@ import {
 } from './modals.js';
 import { planProject } from './ai.js';
 import { $, $maybe } from './dom.js';
+import { openPalette, closePalette, initPalette } from './palette.js';
+import { undo, redo, initHistory } from './history.js';
+import {
+  toggleBulkMode, isBulkMode, bulkSelected, clearBulkSelection,
+} from './render.js';
+import { findTaskByPath, autoEscalate, now } from './data.js';
+import { scheduleSave } from './fileops.js';
+import type { TaskStatus } from '../types/domain';
 
 // Suppress unused-var warning for esc — re-exported indirectly via modals consumers.
 void esc;
@@ -70,6 +78,9 @@ export function closeWorkspace(): void {
   }, 180);
   document.querySelectorAll('#task-list .task-row.selected').forEach((r) => r.classList.remove('selected'));
 }
+
+// ─── History renderer (injected to avoid fileops→render→history cycle) ────────
+initHistory(() => { renderSidebar(); renderProject(); });
 
 // ─── Top-bar buttons ──────────────────────────────────────────────────────
 $('btn-open').addEventListener('click', openFolder);
@@ -135,12 +146,35 @@ $('btn-clear-filters').addEventListener('click', () => {
 
 // ─── Keyboard shortcuts ───────────────────────────────────────────────────
 document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveFile(); }
+  const inInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName);
+
+  // Always-on shortcuts (even in inputs)
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); void saveFile(); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); return; }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) { e.preventDefault(); redo(); return; }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openPalette(); return; }
+
   if (e.key === 'Escape') {
-    // Modal first (it's on top z-stack); if no modal, close drawer.
+    // Close in z-order: palette → modal → drawer
+    if (document.getElementById('palette-overlay')?.style.display !== 'none') { closePalette(); return; }
+    if (document.getElementById('help-overlay')?.style.display !== 'none') { closeHelp(); return; }
     const modal = document.querySelector('.modal-overlay');
     if (modal) { modal.remove(); return; }
-    if ($('detail-panel').classList.contains('open')) closeWorkspace();
+    if ($('detail-panel').classList.contains('open')) { closeWorkspace(); return; }
+    if (isBulkMode()) { toggleBulkMode(); return; }
+  }
+
+  // Shortcuts blocked when typing in inputs
+  if (inInput) return;
+
+  if (e.key === '?') { e.preventDefault(); openHelp(); return; }
+  if (e.key === 'n' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); showAddTaskModal(null); return; }
+  if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+    // Focus list-view search input if visible, else open palette
+    const si = document.getElementById('search-input') as HTMLInputElement | null;
+    if (si && si.offsetParent !== null) { si.focus(); si.select(); } else { openPalette(); }
+    return;
   }
 });
 
@@ -207,8 +241,50 @@ $('btn-font-size').addEventListener('click', () => {
   applyFontSize(FS_SIZES[(FS_SIZES.indexOf(cur) + 1) % FS_SIZES.length]);
 });
 
+// ─── Help overlay ────────────────────────────────────────────────────────
+function openHelp(): void {
+  const el = document.getElementById('help-overlay');
+  if (el) el.style.display = 'flex';
+}
+function closeHelp(): void {
+  const el = document.getElementById('help-overlay');
+  if (el) el.style.display = 'none';
+}
+document.getElementById('help-overlay')?.addEventListener('click', (e) => {
+  if (e.target === document.getElementById('help-overlay')) closeHelp();
+});
+document.getElementById('help-close')?.addEventListener('click', closeHelp);
+
+// ─── Bulk select bar ─────────────────────────────────────────────────────
+document.getElementById('btn-bulk-select')?.addEventListener('click', toggleBulkMode);
+
+document.getElementById('bulk-cancel')?.addEventListener('click', () => {
+  if (isBulkMode()) toggleBulkMode();
+});
+
+function _applyBulkStatus(status: TaskStatus): void {
+  for (const ps of bulkSelected) {
+    const t = findTaskByPath(ps.split('/'));
+    if (!t) continue;
+    t.status = status;
+    t.updatedAt = now();
+    if (status === 'done') t.completedAt = now();
+    (t.activityLog = t.activityLog || []).push({ timestamp: now(), agent: 'Manual', action: `bulk: set status to ${status}` });
+  }
+  getProject(activeProjectId)?.tasks.forEach(autoEscalate);
+  scheduleSave();
+  clearBulkSelection();
+  renderSidebar();
+  renderTaskList();
+}
+
+document.getElementById('bulk-done')?.addEventListener('click', () => _applyBulkStatus('done'));
+document.getElementById('bulk-in-progress')?.addEventListener('click', () => _applyBulkStatus('in_progress'));
+document.getElementById('bulk-todo')?.addEventListener('click', () => _applyBulkStatus('todo'));
+
 // ─── Init ─────────────────────────────────────────────────────────────────
 refreshAgentFilter();
 initTaskListEvents();
 initBoardEvents();
+initPalette();
 tryRestoreDir();

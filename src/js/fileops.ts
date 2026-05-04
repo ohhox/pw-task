@@ -22,6 +22,7 @@ import { closeWorkspace } from './main.js';
 import type { Database, Task, Patch } from '../types/domain';
 import { runMigrations, CURRENT_SCHEMA_VERSION } from '../migrations/index.js';
 import { commands } from '../bindings.js';
+import { onBeforeSave } from './history.js';
 import type {
   Database as RustDatabase,
   Patch as RustPatch,
@@ -383,7 +384,9 @@ async function _saveDbUnlocked(): Promise<void> {
   if (!baseDir || !db) return;
   db.lastUpdated = now();
   db.agents = getAgentsForSave();
-  await tauriWriteTextAtomic(joinPath(baseDir, 'tasks.json'), JSON.stringify(db, null, 2));
+  const json = JSON.stringify(db, null, 2);
+  onBeforeSave(json);
+  await tauriWriteTextAtomic(joinPath(baseDir, 'tasks.json'), json);
   saveTime = new Date();
   updateSaveStatus();
 }

@@ -20,6 +20,38 @@ import { openWorkspace, closeWorkspace } from './main.js';
 import { $ } from './dom.js';
 import type { Task, TaskStatus } from '../types/domain';
 
+// ─── BULK SELECT ──────────────────────────────────────────────────────────────
+
+let _bulkMode = false;
+export const bulkSelected = new Set<string>(); // path strings joined with '/'
+
+export function isBulkMode(): boolean { return _bulkMode; }
+
+export function toggleBulkMode(): void {
+  _bulkMode = !_bulkMode;
+  if (!_bulkMode) {
+    bulkSelected.clear();
+    _updateBulkBar();
+  }
+  const btn = document.getElementById('btn-bulk-select');
+  if (btn) btn.classList.toggle('active', _bulkMode);
+  renderTaskList();
+}
+
+export function clearBulkSelection(): void {
+  bulkSelected.clear();
+  _updateBulkBar();
+  if (_bulkMode) renderTaskList();
+}
+
+function _updateBulkBar(): void {
+  const bar = document.getElementById('bulk-bar');
+  const countEl = document.getElementById('bulk-count');
+  if (!bar) return;
+  bar.style.display = _bulkMode && bulkSelected.size > 0 ? '' : 'none';
+  if (countEl) countEl.textContent = String(bulkSelected.size);
+}
+
 export function renderSidebar(): void {
   const list = $('project-list');
   list.innerHTML = '';
@@ -141,14 +173,18 @@ function buildTaskNode(task: Task, path: string[]): HTMLDivElement {
   const hasReviews = (task.reviews || []).length > 0;
 
   const isRunning = activeRuns.has(task.id);
+  const pathStr = path.join('/');
+  const isBulkChecked = _bulkMode && bulkSelected.has(pathStr);
   const row = document.createElement('div');
   row.className = 'task-row' +
     (isSelected ? ' selected' : '') +
     (task.status === 'pending_review' ? ' review-pending' : '') +
-    (isRunning ? ' task-running' : '');
-  row.dataset.path = path.join('/');
+    (isRunning ? ' task-running' : '') +
+    (isBulkChecked ? ' bulk-checked' : '');
+  row.dataset.path = pathStr;
 
   row.innerHTML = `
+    ${_bulkMode ? `<input type="checkbox" class="task-cb" data-path="${pathStr}"${isBulkChecked ? ' checked' : ''}>` : ''}
     <button class="expand-btn"${hasSubs ? ' data-expandable' : ''}>${hasSubs ? (isCollapsed ? '▶' : '▼') : '·'}</button>
     <div class="task-main">
       <div class="task-title-row">
@@ -220,10 +256,32 @@ export function initTaskListEvents(): void {
       return;
     }
 
+    // Bulk checkbox click
+    const cb = target.closest('.task-cb') as HTMLInputElement | null;
+    if (cb && _bulkMode) {
+      const ps = cb.dataset.path || '';
+      if (cb.checked) bulkSelected.add(ps); else bulkSelected.delete(ps);
+      cb.closest('.task-row')?.classList.toggle('bulk-checked', cb.checked);
+      _updateBulkBar();
+      return;
+    }
+
     const row = target.closest('.task-row[data-path]') as HTMLElement | null;
     if (!row || target.closest('.task-actions')) return;
 
-    // Select task: toggle CSS class without re-rendering the whole list
+    // Bulk mode: row click toggles selection
+    if (_bulkMode) {
+      const ps = row.dataset.path || '';
+      const checked = !bulkSelected.has(ps);
+      if (checked) bulkSelected.add(ps); else bulkSelected.delete(ps);
+      const rowCb = row.querySelector<HTMLInputElement>('.task-cb');
+      if (rowCb) rowCb.checked = checked;
+      row.classList.toggle('bulk-checked', checked);
+      _updateBulkBar();
+      return;
+    }
+
+    // Normal mode: select task and open drawer
     const path = (row.dataset.path || '').split('/');
     document.querySelectorAll('#task-list .task-row.selected').forEach((r) => r.classList.remove('selected'));
     row.classList.add('selected');
