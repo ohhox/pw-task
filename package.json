@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "tauri": "tauri",
+    "tauri": "node scripts/run-tauri.mjs",
     "setup": "node scripts/setup-tasks.mjs",
     "postinstall": "node scripts/setup-tasks.mjs",
     "dev:vite": "vite",
     "build:vite": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "dev": "tauri dev",
-    "build": "tauri build",
+    "dev": "node scripts/run-tauri.mjs dev",
+    "build": "node scripts/run-tauri.mjs build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -18,7 +18,10 @@
     "format:check": "prettier --check \"src/**/*.{js,ts,html,css}\"",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "wdio run tests/e2e/wdio.conf.cjs"
+    "test:e2e": "wdio run tests/e2e/wdio.conf.cjs",
+    "build:bindings": "node scripts/run-cargo.mjs test export_bindings --manifest-path src-tauri/Cargo.toml",
+    "rust:check": "node scripts/run-cargo.mjs check --manifest-path src-tauri/Cargo.toml",
+    "rust:test": "node scripts/run-cargo.mjs test --manifest-path src-tauri/Cargo.toml"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

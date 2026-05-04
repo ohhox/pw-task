@@ -36,6 +36,18 @@ export interface RunHistoryEntry {
   summary?: string;
   sessionId?: string | null;
   outputFile?: string | null;
+  /** Token usage and cost from Anthropic's result line. Absent for older run entries. */
+  tokens?: TokenUsage | null;
+}
+
+/** Token usage + cost captured from Anthropic's result line. Matches bindings.ts `TokenUsage`. */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheCreationInputTokens: number;
+  cacheReadInputTokens: number;
+  /** Authoritative cost — do NOT recompute client-side; Anthropic returns this server-side. */
+  totalCostUsd: number;
 }
 
 export interface Review {

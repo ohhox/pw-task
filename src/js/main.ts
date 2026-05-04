@@ -1,15 +1,17 @@
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 // Owns: DOM event bindings, font-size toggle, and app initialization (tryRestoreDir).
 // Does NOT: contain business logic — wires UI events to the appropriate module functions.
+import { getLogger } from '../logger.js';
 import { activeProjectId, filterState, setSelectedTaskPath } from './state.js';
 import { esc, toast, getProject } from './data.js';
-import { tauriOpenInVscode, tauriRunProjectCmd } from './api.js';
+import { tauriOpenTerminal, tauriRunProjectCmd } from './api.js';
 import {
   openFolder, saveFile, archiveDoneTasks, checkPatches, tryRestoreDir,
 } from './fileops.js';
 import {
   renderTaskList, refreshAgentFilter, initTaskListEvents,
 } from './render.js';
+import { renderBoard, initBoardEvents } from './board.js';
 import {
   showAddProjectModal, showEditProjectModal, showAddTaskModal,
   showClaudeMdCopyModal, showAgentManagerModal, confirmDeleteProject,
@@ -20,16 +22,52 @@ import { $, $maybe } from './dom.js';
 // Suppress unused-var warning for esc — re-exported indirectly via modals consumers.
 void esc;
 
+// ─── Global error handlers ────────────────────────────────────────────────
+// Catch unhandled errors and promise rejections and forward them to the
+// structured logger so they appear in the daily Rust log file as well.
+const _globalLog = getLogger('global');
+
+window.addEventListener('error', (e) => {
+  _globalLog.error('Unhandled error', e.error, {
+    source: e.filename,
+    line: e.lineno,
+    col: e.colno,
+  });
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  const err = e.reason instanceof Error ? e.reason : new Error(String(e.reason));
+  _globalLog.error('Unhandled promise rejection', err);
+});
+
 // ─── Workspace toggles ────────────────────────────────────────────────────
+// Sprint 3 / Phase A: detail panel is now a side-drawer (slides in from right
+// over the list view). The list stays visible underneath so the user can keep
+// scanning while inspecting a task. Closes on Esc, backdrop click, or the
+// drawer's close button.
 export function openWorkspace(): void {
-  $('task-list-view').style.display = 'none';
-  $('detail-panel').style.display = 'flex';
+  const panel = $('detail-panel');
+  const backdrop = $('drawer-backdrop');
+  panel.style.display = 'flex';
+  backdrop.style.display = 'block';
+  // RAF so the transition runs (display:flex → opacity/transform must paint first)
+  requestAnimationFrame(() => {
+    panel.classList.add('open');
+    backdrop.classList.add('open');
+  });
 }
 
 export function closeWorkspace(): void {
+  const panel = $('detail-panel');
+  const backdrop = $('drawer-backdrop');
   setSelectedTaskPath(null);
-  $('detail-panel').style.display = 'none';
-  $('task-list-view').style.display = '';
+  panel.classList.remove('open');
+  backdrop.classList.remove('open');
+  // Wait for the slide-out transition before hiding so we don't snap-flicker.
+  setTimeout(() => {
+    panel.style.display = 'none';
+    backdrop.style.display = 'none';
+  }, 180);
   document.querySelectorAll('#task-list .task-row.selected').forEach((r) => r.classList.remove('selected'));
 }
 
@@ -48,10 +86,10 @@ $('btn-plan-project').addEventListener('click', () => {
   const proj = getProject(activeProjectId);
   if (proj) planProject(proj);
 });
-$('btn-vscode').addEventListener('click', async () => {
+$('btn-terminal').addEventListener('click', async () => {
   const proj = getProject(activeProjectId);
   if (!proj?.workingDir) { toast('ยังไม่ได้ตั้ง Working Directory'); return; }
-  try { await tauriOpenInVscode(proj.workingDir); }
+  try { await tauriOpenTerminal(proj.workingDir); }
   catch (e) { toast('❌ ' + String(e)); }
 });
 $('btn-run-project').addEventListener('click', async () => {
@@ -64,6 +102,7 @@ $('btn-run-project').addEventListener('click', async () => {
 $('btn-delete-project').addEventListener('click', confirmDeleteProject);
 $('btn-add-task').addEventListener('click', () => showAddTaskModal(null));
 $('detail-close').addEventListener('click', closeWorkspace);
+$('drawer-backdrop').addEventListener('click', closeWorkspace);
 
 // ─── Filters ──────────────────────────────────────────────────────────────
 $<HTMLInputElement>('search-input').addEventListener('input', (e) => {
@@ -98,8 +137,38 @@ $('btn-clear-filters').addEventListener('click', () => {
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveFile(); }
   if (e.key === 'Escape') {
-    document.querySelector('.modal-overlay')?.remove();
+    // Modal first (it's on top z-stack); if no modal, close drawer.
+    const modal = document.querySelector('.modal-overlay');
+    if (modal) { modal.remove(); return; }
+    if ($('detail-panel').classList.contains('open')) closeWorkspace();
   }
+});
+
+// ─── View tabs (Sprint 3 / Phase A — placeholder switcher) ────────────────
+// List view is the only working view; Board/Timeline/Calendar render a
+// "coming soon" card. Wiring the click handler now keeps the tabs alive
+// across renders without re-binding per-project.
+const VIEW_PANES: Record<string, string> = {
+  list: 'task-list-view',
+  board: 'board-view',
+  timeline: 'timeline-view',
+  calendar: 'calendar-view',
+};
+const viewTabs = document.getElementById('view-tabs');
+viewTabs?.addEventListener('click', (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.view-tab');
+  if (!btn || !btn.dataset.view) return;
+  const target = btn.dataset.view;
+  if (!VIEW_PANES[target]) return;
+  // Toggle active tab
+  viewTabs.querySelectorAll('.view-tab').forEach((t) => t.classList.toggle('active', t === btn));
+  // Toggle pane visibility
+  for (const [view, paneId] of Object.entries(VIEW_PANES)) {
+    const pane = document.getElementById(paneId);
+    if (pane) pane.style.display = view === target ? '' : 'none';
+  }
+  // Populate board when switching to it
+  if (target === 'board') renderBoard();
 });
 
 // ─── Sync button ──────────────────────────────────────────────────────────
@@ -141,4 +210,5 @@ $('btn-font-size').addEventListener('click', () => {
 // ─── Init ─────────────────────────────────────────────────────────────────
 refreshAgentFilter();
 initTaskListEvents();
+initBoardEvents();
 tryRestoreDir();

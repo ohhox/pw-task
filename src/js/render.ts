@@ -10,8 +10,8 @@ import {
   countByStatus, globalCount, calcProgress,
   getProject, findTaskByPath, autoEscalate, now
 } from './data.js';
-import { getEnabledAgents, getTaskAgentLabel } from './agents/registry.js';
-import { legacyToAgentId } from './agents/legacy-mapping.js';
+import { statusChip, priorityChip, chip } from '../views/components/chip.js';
+import { getEnabledAgents, getTaskAgentLabel, legacyToAgentId } from './agents/index.js';
 import { scheduleSave, showWelcome } from './fileops.js';
 import { renderDetail } from './detail.js';
 import { showAddTaskModal, showEditTaskModal, confirmDeleteTask } from './modals.js';
@@ -61,13 +61,15 @@ export function renderProject(): void {
     showWelcome('');
     return;
   }
+  // .proj-icon (id project-dot-big) shows the project's color block — fill the
+  // whole tile so it reads as the project mark.
   $('project-dot-big').style.background = proj.color;
   $('project-title-text').textContent = proj.name;
   $('project-desc-text').textContent = proj.description || '';
-  $('project-goal-text').textContent = proj.goal ? `🎯 ${proj.goal}` : '';
-  $('project-workdir-text').textContent = proj.workingDir ? `📁 ${proj.workingDir}` : '';
-  $('project-id-text').textContent = `🪪 ${proj.id}`;
-  $('btn-vscode').style.display = proj.workingDir ? '' : 'none';
+  $('project-goal-text').textContent = proj.goal || '';
+  $('project-workdir-text').textContent = proj.workingDir || '';
+  $('project-id-text').textContent = proj.id;
+  $('btn-terminal').style.display = proj.workingDir ? '' : 'none';
   $('btn-run-project').style.display = proj.runCommand ? '' : 'none';
   renderTaskList();
   if (selectedTaskPath) renderDetail();
@@ -106,11 +108,20 @@ const STATUS_SORT: Record<TaskStatus, number> = {
 export function renderTaskList(): void {
   const proj = getProject(activeProjectId);
   const container = $('task-list');
-  if (!proj) { container.innerHTML = ''; return; }
+  const countEl = document.getElementById('task-count-display');
+  if (!proj) {
+    container.innerHTML = '';
+    if (countEl) countEl.textContent = '';
+    return;
+  }
   const visible = (proj.tasks || [])
     .filter(taskOrChildMatches)
     .slice()
     .sort((a, b) => (STATUS_SORT[a.status] ?? 3) - (STATUS_SORT[b.status] ?? 3));
+  if (countEl) {
+    const total = (proj.tasks || []).length;
+    countEl.textContent = visible.length === total ? `${total} tasks` : `${visible.length} of ${total} tasks`;
+  }
   if (!visible.length) {
     container.innerHTML = '<div class="empty-state">No tasks match your filter</div>';
     return;
@@ -143,11 +154,11 @@ function buildTaskNode(task: Task, path: string[]): HTMLDivElement {
       <div class="task-title-row">
         ${isRunning ? '<span class="running-pulse" title="กำลังรันอยู่"></span>' : ''}
         <span class="task-title ${task.status === 'done' ? 'done-title' : ''}">${esc(task.title)}</span>
-        <span class="badge status-${task.status}">${statusLabel(task.status)}</span>
-        ${task.priority && task.priority !== 'medium' ? `<span class="badge priority-${esc(task.priority)}">${esc(task.priority)}</span>` : ''}
-        ${(() => { const lbl = getTaskAgentLabel(task); return lbl && lbl !== 'Executor' ? `<span class="badge agent-badge">${esc(lbl)}</span>` : ''; })()}
+        ${statusChip(task.status)}
+        ${priorityChip(task.priority || '')}
+        ${(() => { const lbl = getTaskAgentLabel(task); return lbl && lbl !== 'Executor' ? chip({ label: lbl, variant: 'agent' }) : ''; })()}
         ${task.model ? `<span class="badge ${modelBadgeClass(task.model)}">${esc(modelShortName(task.model))}</span>` : ''}
-        ${(task.tags || []).map((t) => `<span class="badge" style="background:var(--surface3);color:var(--text-muted)">#${esc(t)}</span>`).join('')}
+        ${(task.tags || []).map((t) => chip({ label: '#' + t, variant: 'tag' })).join('')}
         ${(task.filesModified || []).length ? `<span class="task-meta-text">📎 ${task.filesModified.length}</span>` : ''}
         ${progress !== null ? `<span class="task-meta-text">${progress}%</span>` : ''}
         ${hasReviews ? `<span class="task-meta-text">💬</span>` : ''}

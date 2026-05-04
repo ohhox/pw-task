@@ -25,7 +25,7 @@ export const tauriWriteTextAtomic = (path: string, contents: string) =>
 export const tauriReadDir = (path: string) => tauriInvoke('read_dir', { path });
 export const tauriRemove = (path: string) => tauriInvoke('remove_file', { path });
 export const tauriCreateDir = (path: string) => tauriInvoke('create_dir', { path });
-export const tauriOpenInVscode = (path: string) => tauriInvoke('open_in_vscode', { path });
+export const tauriOpenTerminal = (path: string) => tauriInvoke('open_terminal', { path });
 export const tauriRunProjectCmd = (cmd: string, workingDir: string) =>
   tauriInvoke('run_project_command', { cmd, workingDir });
 export const tauriGetConfig = () => tauriInvoke('get_config');

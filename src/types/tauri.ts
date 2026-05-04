@@ -25,6 +25,8 @@ export interface RunClaudeArgs {
 export interface RunResult {
   output: string;
   sessionId: string | null;
+  /** Token usage + cost from Anthropic's result line. Absent when stream had no result line. */
+  usage?: { inputTokens: number; outputTokens: number; cacheCreationInputTokens: number; cacheReadInputTokens: number; totalCostUsd: number } | null;
 }
 
 // ─── COMMAND MAP ──────────────────────────────────────────────────────────
@@ -46,7 +48,7 @@ export interface TauriCommands {
   create_dir: (args: { path: string }) => Promise<void>;
 
   // External process
-  open_in_vscode: (args: { path: string }) => Promise<void>;
+  open_terminal: (args: { path: string }) => Promise<void>;
   run_project_command: (args: { cmd: string; workingDir: string }) => Promise<void>;
 
   // Claude orchestration — emits `run-line:{runId}` events while streaming

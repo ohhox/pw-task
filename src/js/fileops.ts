@@ -1,6 +1,7 @@
 // ─── FILEOPS ────────────────────────────────────────────────────────────────
 // Owns: folder selection, tasks.json read/write, patch apply/sync, archive.
 // Does NOT: touch DOM beyond welcome/save-status helpers, contain UI logic.
+import { getLogger } from '../logger.js';
 import {
   db, baseDir, activeProjectId, selectedTaskPath,
   setDb, setBaseDir, setActiveProjectId,
@@ -11,17 +12,27 @@ import {
 } from './api.js';
 import {
   now, joinPath, esc, toast,
-  findTaskByPath, findTaskAnywhere, autoEscalate, isFullyDone,
+  findTaskByPath, isFullyDone,
 } from './data.js';
-import { loadAgentsFromDb, getAgentsForSave } from './agents/registry.js';
+import { loadAgentsFromDb, getAgentsForSave } from './agents/index.js';
 import { renderSidebar, renderProject, refreshAgentFilter } from './render.js';
 import { renderDetail } from './detail.js';
 import { showModal } from './modals.js';
 import { closeWorkspace } from './main.js';
-import type { Database, Task, Patch, Change } from '../types/domain';
+import type { Database, Task, Patch } from '../types/domain';
+import { runMigrations, CURRENT_SCHEMA_VERSION } from '../migrations/index.js';
+import { commands } from '../bindings.js';
+import type {
+  Database as RustDatabase,
+  Patch as RustPatch,
+  PatchSource as RustPatchSource,
+  ApplyResult as RustApplyResult,
+} from '../bindings.js';
 
 // Narrow `unknown` errors caught from try/catch into a printable string.
 const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+const log = getLogger('fileops');
 
 // ─── SAVE STATE ───────────────────────────────────────────────────────────
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -44,9 +55,11 @@ async function withSaveLock<T>(fn: () => Promise<T> | T): Promise<T> {
   }
 }
 
-// [P1 fix] Schema validation — silent-skip is a footgun. We at least require the
-// shape is sane and report mismatches via toast so the user knows when patches
-// are being dropped.
+// [Phase 1.6.4] Patch shape validation — moved to Rust. The wire format is
+// permissive (Change type-tagged enum, optional fields), so most shape errors
+// surface as serde-deserialize failures inside `commands.patchApplyBatch`.
+// This wrapper still returns the legacy `string | null` shape so existing
+// callers keep working; we do the cheap checks locally before paying for IPC.
 export function validatePatch(patch: unknown): string | null {
   if (!patch || typeof patch !== 'object') return 'patch is not an object';
   const p = patch as Record<string, unknown>;
@@ -111,9 +124,35 @@ export async function loadFromDir(): Promise<void> {
     showWelcome(`<span style="color:var(--red)">tasks.json รูปแบบไม่ถูกต้อง — ขาด projects array</span>`);
     return;
   }
-  const dbParsed = parsed as Database;
+
+  // [P1.4.1] Schema migration — run before setDb so the in-memory db is always current.
+  // `text` is the original raw JSON (pre-migration) used as the backup snapshot.
+  let dbParsed = parsed as Database;
+  try {
+    const migResult = runMigrations(dbParsed);
+    if (migResult.ran.length > 0) {
+      // 1. Backup original (pre-migration) data using the raw text we already read.
+      const tasksJsonPath = joinPath(baseDir, 'tasks.json');
+      const backupPath = `${tasksJsonPath}.v${migResult.fromVersion}.bak`;
+      await tauriWriteText(backupPath, text);
+      // 2. Save the migrated db atomically.
+      dbParsed = migResult.db as Database;
+      await tauriWriteTextAtomic(tasksJsonPath, JSON.stringify(dbParsed, null, 2));
+      // 3. Notify the user.
+      toast(`✅ Migrated schema: ${migResult.ran.join(', ')}`);
+    } else {
+      dbParsed = migResult.db as Database;
+    }
+  } catch (e) {
+    // Migration failure is non-fatal — log and continue with parsed data as-is.
+    log.error('Schema migration failed', e);
+    toast(`⚠️ Schema migration failed: ${errMsg(e)}`, 5000);
+  }
+
   // [P1 fix] init applied-patches tracker
   if (!Array.isArray(dbParsed.appliedPatches)) dbParsed.appliedPatches = [];
+  // Stamp schemaVersion so future loads skip migration for this db.
+  if (!dbParsed.schemaVersion) dbParsed.schemaVersion = CURRENT_SCHEMA_VERSION;
   setDb(dbParsed);
 
   loadAgentsFromDb(db?.agents); // must run before applyPatches so saveFileOrThrow persists correct agents
@@ -187,13 +226,24 @@ export function updateSaveStatus(): void {
 setInterval(updateSaveStatus, 15000);
 
 // ─── PATCH SYSTEM ──────────────────────────────────────────────────────────
+//
+// [Phase 1.6.4] The pure mutation pipeline (validate / apply per Change type
+// / sort+dedupe a batch) lives in Rust at `src-tauri/src/patch.rs`. This
+// module keeps the disk pipeline (read patches/ dir, parse JSON, write db,
+// delete consumed files) because Rust does not yet own the DB layer
+// (Phase 1.6.5 will move it).
+//
+// Idempotency now layers:
+//   * In-memory tracker on the Rust side (process lifetime cache).
+//   * Durable `db.appliedPatches` list passed in/out via the IPC tuple.
+//   * Disk-side: consumed files deleted; if delete fails, write an
+//     `_applied: true` marker so a re-scan ignores them.
 
 interface PatchQueueEntry {
   name: string;
   path: string;
   patch: Patch;
-  id?: string;
-  alreadyApplied?: boolean;
+  id: string;
 }
 
 export async function applyPatches(): Promise<number> {
@@ -213,7 +263,10 @@ async function _applyPatchesUnlocked(): Promise<number> {
     return 0;
   }
 
-  const patches: PatchQueueEntry[] = [];
+  // Phase 1: parse + validate every file, skipping bad ones with a warning.
+  // The Rust pipeline handles ordering + idempotency, so all we do here is
+  // produce a flat list of `(id, patch, file path)` tuples.
+  const queue: PatchQueueEntry[] = [];
   const skipReasons: string[] = [];
   for (const entry of entries) {
     if (!entry.name?.endsWith('.json')) continue;
@@ -232,58 +285,70 @@ async function _applyPatchesUnlocked(): Promise<number> {
       skipReasons.push(`${entry.name}: invalid JSON`);
       continue;
     }
+    // Marker files (`{_applied: true}`) — written when a previous run
+    // could not delete a consumed patch. Skip BEFORE validation so they
+    // don't show up as "missing changes array" warnings.
     if (patch._applied) continue;
-
     const err = validatePatch(patch);
     if (err) { skipReasons.push(`${entry.name}: ${err}`); continue; }
 
     const id = patchIdentity(entry.name, patch);
-    if (db.appliedPatches.includes(id)) {
-      skipReasons.push(`${entry.name}: already applied (skip)`);
-      patches.push({ name: entry.name, path: filePath, patch, alreadyApplied: true });
-      continue;
-    }
-    patches.push({ name: entry.name, path: filePath, patch, id });
+    queue.push({ name: entry.name, path: filePath, patch, id });
   }
 
   if (skipReasons.length) {
-    console.warn('Patch issues:', skipReasons);
+    log.warn('Patch issues', { reasons: skipReasons });
     if (skipReasons.some((r) => !r.includes('already applied'))) {
       toast(`⚠️ Patch issues: ${skipReasons.length} (ดู console)`, 4000);
     }
   }
 
-  if (!patches.length) return 0;
+  if (!queue.length) return 0;
 
-  patches.sort((a, b) => {
-    const ta = a.patch.timestamp || a.name;
-    const tb = b.patch.timestamp || b.name;
-    return ta.localeCompare(tb);
-  });
+  // Phase 2: hand off to Rust. The Rust side sorts by timestamp, dedupes
+  // against db.appliedPatches + its in-memory tracker, applies each patch,
+  // and runs auto-escalate on every project tree before returning.
+  const sources: RustPatchSource[] = queue.map((q) => ({
+    id: q.id,
+    patch: q.patch as unknown as RustPatch,
+  }));
+  let mutated: RustDatabase;
+  let summary: RustApplyResult;
+  try {
+    [mutated, summary] = await commands.patchApplyBatch(
+      db as unknown as RustDatabase,
+      sources,
+    );
+  } catch (e) {
+    log.warn('patchApplyBatch failed', { error: errMsg(e) });
+    toast(`❌ Patch apply failed: ${errMsg(e)}`, 4000);
+    return 0;
+  }
+  setDb(mutated as unknown as Database);
+  if (summary.errors.length) {
+    log.warn('Patch errors', { errors: summary.errors });
+    toast(`❌ Patch errors: ${summary.errors.length} (ดู console)`, 4000);
+  }
 
+  // Phase 3: persist + delete files for everything that was applied or
+  // skipped (already-applied entries' files should be removed too so they
+  // don't pile up). Patches whose apply errored stay on disk for manual
+  // inspection.
+  // Rust formats errors as `"{id}: {message}"` — split on the first ": "
+  // (with space) so source ids that contain a colon parse correctly.
+  const erroredIds = new Set(
+    summary.errors.map((e) => {
+      const idx = e.indexOf(': ');
+      return idx === -1 ? e : e.slice(0, idx);
+    })
+  );
   const toDelete: { name: string; path: string }[] = [];
-  let appliedCount = 0;
-  for (const { name, path, patch, id, alreadyApplied } of patches) {
-    if (alreadyApplied) {
-      toDelete.push({ name, path });
-      continue;
-    }
-    try {
-      applyPatch(patch);
-      if (id) db.appliedPatches.push(id);
-      appliedCount++;
-      toDelete.push({ name, path });
-    } catch (e) {
-      console.warn('Failed to apply patch:', name, e);
-      toast(`❌ Failed to apply ${name}: ${errMsg(e)}`, 4000);
-    }
+  for (const q of queue) {
+    if (erroredIds.has(q.id)) continue;
+    toDelete.push({ name: q.name, path: q.path });
   }
 
-  if (db.appliedPatches.length > 1000) {
-    db.appliedPatches = db.appliedPatches.slice(-1000);
-  }
-
-  if (!toDelete.length) return 0;
+  if (!toDelete.length) return summary.applied;
 
   try {
     await _saveDbUnlocked();
@@ -307,10 +372,10 @@ async function _applyPatchesUnlocked(): Promise<number> {
       try {
         await tauriWriteText(path, JSON.stringify({ _applied: true }));
       } catch {}
-      console.warn('Failed to remove patch:', name);
+      log.warn('Failed to remove patch', { name });
     }
   }
-  return appliedCount;
+  return summary.applied;
 }
 
 // [P1 fix] Internal save without re-acquiring the lock.
@@ -323,105 +388,10 @@ async function _saveDbUnlocked(): Promise<void> {
   updateSaveStatus();
 }
 
-// Allowlist for update_task — keep in sync with src/types/domain.ts UpdateTaskEvent.
-const UPDATE_TASK_ALLOWED: Array<keyof Task> = [
-  'title', 'description', 'priority', 'agentId', 'aiAgent', 'model', 'prompt', 'tags',
-];
-
-export function applyPatch(patch: Patch): void {
-  if (!db) return;
-  for (const change of patch.changes || []) {
-    const proj = 'projectId' in change ? db.projects.find((p) => p.id === change.projectId) : undefined;
-    const ts = patch.timestamp || now();
-    const agent = patch.agent || 'AI';
-
-    switch (change.type) {
-      case 'status_change': {
-        const task = proj ? findTaskAnywhere(proj.tasks, change.taskId) : null;
-        if (!task) break;
-        if (task.status === change.to) break;
-        const old = task.status;
-        task.status = change.to;
-        task.updatedAt = ts;
-        if (change.to === 'done') task.completedAt = ts;
-        (task.activityLog = task.activityLog || []).push({
-          timestamp: ts,
-          agent,
-          action: `changed status from ${old} to ${change.to}${change.note ? ': ' + change.note : ''}`,
-        });
-        if (change.note) {
-          task.lastNote = { timestamp: ts, agent, summary: change.note };
-        }
-        break;
-      }
-      case 'add_project': {
-        if (!change.project) break;
-        if (db.projects.find((p) => p.id === change.project.id)) break;
-        db.projects.push({ ...change.project, tasks: change.project.tasks ?? [] });
-        break;
-      }
-      case 'add_task': {
-        if (!proj) break;
-        const task: Task = { reviews: [], ...change.task };
-        if (change.parentTaskId) {
-          const parent = findTaskAnywhere(proj.tasks, change.parentTaskId);
-          if (parent) {
-            if (!findTaskAnywhere(parent.subtasks || [], task.id)) {
-              (parent.subtasks = parent.subtasks || []).push(task);
-            }
-          }
-        } else {
-          if (!findTaskAnywhere(proj.tasks, task.id)) proj.tasks.push(task);
-        }
-        break;
-      }
-      case 'update_task': {
-        const task = proj ? findTaskAnywhere(proj.tasks, change.taskId) : null;
-        if (!task) break;
-        const updates = (change.updates || {}) as Partial<Record<keyof Task, unknown>>;
-        const filtered = Object.fromEntries(
-          Object.entries(updates).filter(([k]) => UPDATE_TASK_ALLOWED.includes(k as keyof Task))
-        ) as Partial<Task>;
-        if (!Object.keys(filtered).length) break;
-        const willChange = Object.entries(filtered).some(
-          ([k, v]) => JSON.stringify((task as unknown as Record<string, unknown>)[k]) !== JSON.stringify(v)
-        );
-        if (!willChange) break;
-        Object.assign(task, filtered);
-        task.updatedAt = ts;
-        (task.activityLog = task.activityLog || []).push({
-          timestamp: ts,
-          agent,
-          action: `updated ${Object.keys(filtered).join(', ')}${change.note ? ' — ' + change.note : ''}`,
-        });
-        if (change.note) {
-          task.lastNote = { timestamp: ts, agent, summary: change.note };
-        }
-        break;
-      }
-      case 'files_modified': {
-        const task = proj ? findTaskAnywhere(proj.tasks, change.taskId) : null;
-        if (!task) break;
-        task.filesModified = [
-          ...new Set([...(task.filesModified || []), ...(change.files || [])]),
-        ];
-        task.updatedAt = ts;
-        break;
-      }
-      case 'add_log': {
-        const task = proj ? findTaskAnywhere(proj.tasks, change.taskId) : null;
-        if (!task) break;
-        const log = change.log;
-        const exists = (task.activityLog || []).some(
-          (l) => l.timestamp === log.timestamp && l.action === log.action && l.agent === log.agent
-        );
-        if (!exists) (task.activityLog = task.activityLog || []).push(log);
-        break;
-      }
-    }
-  }
-  db.projects.forEach((p) => (p.tasks || []).forEach(autoEscalate));
-}
+// [Phase 1.6.4] `applyPatch` (single-patch in-process mutation) and the
+// `UPDATE_TASK_ALLOWED` constant moved to Rust (`src-tauri/src/patch.rs`).
+// All TS callers now go through `applyPatches()` which calls
+// `commands.patchApplyBatch` for the actual mutation.
 
 // ─── ARCHIVE ───────────────────────────────────────────────────────────────
 

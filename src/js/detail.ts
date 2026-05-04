@@ -10,9 +10,7 @@ import {
   countAll, countDone, safePathJoin
 } from './data.js';
 import { tauriReadText } from './api.js';
-import { getEnabledAgents, getAgent } from './agents/registry.js';
-import { legacyToAgentId } from './agents/legacy-mapping.js';
-import { resolveAgentId } from './agents/routing.js';
+import { getEnabledAgents, getAgent, legacyToAgentId, resolveAgentId } from './agents/index.js';
 import { scheduleSave } from './fileops.js';
 import { runClaude, playTask } from './ai.js';
 import { renderSidebar, renderTaskList } from './render.js';
@@ -242,6 +240,16 @@ export function renderDetail() {
         const sumEl = document.createElement('div'); sumEl.className = 'run-history-summary';
         sumEl.textContent = run.summary || '';
         item.appendChild(meta); item.appendChild(sumEl);
+
+        if (run.tokens) {
+          const t = run.tokens;
+          const tokEl = document.createElement('div'); tokEl.className = 'run-history-tokens';
+          const totalTok = (t.inputTokens || 0) + (t.outputTokens || 0);
+          const cacheStr = (t.cacheReadInputTokens || 0) > 0 ? ` · ${(t.cacheReadInputTokens).toLocaleString()} cached` : '';
+          const costStr = (t.totalCostUsd || 0) > 0 ? `$${t.totalCostUsd.toFixed(4)}` : '';
+          tokEl.innerHTML = `<span class="run-history-tok-count">${totalTok.toLocaleString()} tokens${cacheStr}</span>${costStr ? `<span class="run-history-cost">${costStr}</span>` : ''}`;
+          item.appendChild(tokEl);
+        }
 
         if (run.outputFile) {
           const viewBtn = document.createElement('button'); viewBtn.className = 'run-view-btn';

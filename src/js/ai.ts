@@ -1,6 +1,7 @@
 // ─── AI ──────────────────────────────────────────────────────────────────────
 // Owns: Claude run flow (streaming, session resume, review/re-run) and project planning.
 // Does NOT: choose provider directly — delegates to execution-service.ts.
+import { getLogger } from '../logger.js';
 import {
   baseDir, activeProjectId, activeRuns, setSelectedTaskPath,
 } from './state.js';
@@ -11,8 +12,7 @@ import {
 import {
   tauriListen, tauriWriteText, tauriCreateDir,
 } from './api.js';
-import { getAgent, getTaskAgentLabel } from './agents/registry.js';
-import { resolveAgentId } from './agents/routing.js';
+import { getAgent, getTaskAgentLabel, resolveAgentId } from './agents/index.js';
 import { runTaskWithAgent, planProjectWithAgent } from './agents/execution-service.js';
 import { scheduleSave, applyPatches } from './fileops.js';
 import { renderSidebar, renderTaskList, renderProject } from './render.js';
@@ -21,6 +21,8 @@ import { openWorkspace } from './main.js';
 import type { Task, TaskStatus, TaskPriority, Project, Patch, ModelId } from '../types/domain';
 
 const errMsg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+const log = getLogger('ai');
 
 // ─── Run flow ────────────────────────────────────────────────────────────
 
@@ -105,7 +107,7 @@ export async function runClaude({
       return;
     }
 
-    const { output = '', sessionId: sid, agentId, model } = exResult;
+    const { output = '', sessionId: sid, agentId, model, usage } = exResult;
     if (sid) task.lastSessionId = sid;
     if (agentId) task.agentId = agentId;
 
@@ -123,7 +125,7 @@ export async function runClaude({
           taskId: task.id, timestamp: runTs, model, agentId, sessionId: sid, output,
         }, null, 2));
       } catch (e) {
-        console.warn('run output save failed:', e);
+        log.warn('run output save failed', { error: errMsg(e) });
         outputFile = null;
       }
     }
@@ -137,6 +139,7 @@ export async function runClaude({
     });
     (task.runHistory = task.runHistory || []).push({
       timestamp: runTs, model, agentId, summary, sessionId: sid, outputFile,
+      ...(usage != null ? { tokens: usage } : {}),
     });
     cleanup();
     scheduleSave(); renderSidebar(); renderTaskList();

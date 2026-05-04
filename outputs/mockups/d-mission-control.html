@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PwTask // Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil+Display:wght@500;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&family=Major+Mono+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Cassette-futurism palette: warm cream foreground on phosphor-screen ink */
+  --paper:    #E8DDC6;
+  --paper-2:  #C9BEA9;
+  --paper-3:  #8A8472;
+  --ink:      #0B0F12;
+  --ink-2:    #131A20;
+  --ink-3:    #1C242C;
+  --ink-4:    #283340;
+  --rule:     #3B4754;
+  --rule-strong: #5B6877;
+  --amber:    #FFAA00;
+  --amber-soft: rgba(255,170,0,0.12);
+  --signal:   #00D26A;
+  --signal-soft: rgba(0,210,106,0.12);
+  --alert:    #FF3B30;
+  --alert-soft: rgba(255,59,48,0.12);
+  --ice:      #5BC0EB;
+  --ice-soft: rgba(91,192,235,0.12);
+  --plum:     #C77DFF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%; background: var(--ink); color: var(--paper);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px; line-height: 1.5; -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'tnum' 1, 'cv02' 1, 'cv05' 1;
+  overflow: hidden;
+}
+
+/* Faint tech grid overlay across whole app */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+/* Subtle grain */
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 2; opacity: 0.4;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 0.91  0 0 0 0 0.87  0 0 0 0 0.78  0 0 0 0.04 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+  mix-blend-mode: overlay;
+}
+
+/* ──────────────── HUD STRIP TOP ──────────────── */
+.hud {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; gap: 0;
+  height: 28px; padding: 0 16px;
+  background: var(--ink-2); border-bottom: 1px solid var(--rule);
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--paper-3);
+}
+.hud > div { display: flex; align-items: center; gap: 6px; padding: 0 14px; }
+.hud .hud-cell { border-right: 1px solid var(--rule); }
+.hud .hud-cell:first-child { padding-left: 0; }
+.hud .led {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--signal); box-shadow: 0 0 6px var(--signal);
+  animation: blink 2s ease-in-out infinite;
+}
+.hud .led.amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.hud .led.alert { background: var(--alert); box-shadow: 0 0 6px var(--alert); }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+.hud-spacer { flex: 1; }
+.hud strong { color: var(--paper); font-weight: 500; letter-spacing: 0.06em; }
+
+/* ──────────────── SHELL ──────────────── */
+.shell { position: relative; z-index: 10; display: flex; height: calc(100vh - 28px - 24px); }
+
+/* ──────────────── SIDEBAR ──────────────── */
+.sidebar {
+  width: 240px; flex-shrink: 0;
+  border-right: 1px solid var(--rule);
+  display: flex; flex-direction: column;
+  background: var(--ink);
+}
+
+.brand {
+  padding: 22px 18px 16px;
+  display: flex; gap: 10px; align-items: flex-start;
+  border-bottom: 1px solid var(--rule);
+}
+.brand-mark {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border: 1.5px solid var(--paper); border-radius: 2px;
+  position: relative; overflow: hidden;
+}
+.brand-mark::before, .brand-mark::after {
+  content: ''; position: absolute; background: var(--paper);
+}
+.brand-mark::before { left: 50%; top: 4px; bottom: 4px; width: 1px; transform: translateX(-50%); }
+.brand-mark::after { top: 50%; left: 4px; right: 4px; height: 1px; transform: translateY(-50%); }
+.brand-mark span {
+  position: absolute; inset: 8px; border: 1px solid var(--paper); border-radius: 50%;
+}
+.brand-name {
+  font-family: 'Big Shoulders Stencil Display', sans-serif;
+  font-weight: 700; font-size: 22px; letter-spacing: 0.04em;
+  line-height: 0.95; color: var(--paper);
+}
+.brand-sub { font-size: 9px; color: var(--paper-3); letter-spacing: 0.18em; text-transform: uppercase; margin-top: 3px; }
+
+.section {
+  padding: 16px 0 8px;
+  border-bottom: 1px dashed var(--rule);
+}
+.section-title {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 18px 10px;
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--paper-3); font-weight: 500;
+}
+.section-title::before {
+  content: ''; flex-shrink: 0; width: 4px; height: 4px;
+  background: var(--paper-3); transform: rotate(45deg);
+}
+.section-title .num { margin-left: auto; color: var(--paper-2); font-family: 'JetBrains Mono'; }
+
+.proj {
+  padding: 10px 18px; cursor: pointer;
+  display: grid; grid-template-columns: 12px 1fr auto; gap: 12px; align-items: center;
+  border-left: 2px solid transparent;
+  transition: all 0.12s;
+}
+.proj:hover { background: var(--ink-2); }
+.proj.active { background: var(--ink-2); border-left-color: var(--amber); }
+.proj-icon {
+  width: 12px; height: 12px;
+  background: var(--ice); border-radius: 1px;
+  position: relative;
+}
+.proj.active .proj-icon { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.proj-name { font-size: 12px; color: var(--paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.proj.active .proj-name { font-weight: 500; }
+.proj-count { font-size: 10px; color: var(--paper-3); font-variant-numeric: tabular-nums; }
+
+.action-row {
+  padding: 10px 18px; cursor: pointer; color: var(--paper-3);
+  font-size: 11px; letter-spacing: 0.04em;
+  display: flex; align-items: center; gap: 10px;
+  border-left: 2px solid transparent;
+}
+.action-row:hover { color: var(--paper); background: var(--ink-2); }
+.action-row::before {
+  content: '＋'; font-size: 14px; line-height: 1;
+}
+
+/* Status panel at bottom of sidebar */
+.system-panel {
+  margin-top: auto; padding: 14px 18px;
+  border-top: 1px solid var(--rule);
+  font-size: 10px; color: var(--paper-3);
+  letter-spacing: 0.04em;
+}
+.sys-line { display: flex; justify-content: space-between; padding: 3px 0; }
+.sys-line strong { color: var(--paper); font-weight: 500; }
+.sys-line .ok { color: var(--signal); }
+
+/* ──────────────── MAIN ──────────────── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+.briefing {
+  position: relative;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid var(--rule);
+}
+/* Decorative corner brackets */
+.briefing::before, .briefing::after {
+  content: ''; position: absolute; width: 14px; height: 14px;
+  border: 1.5px solid var(--rule-strong);
+}
+.briefing::before { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+.briefing::after { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+
+.brief-meta {
+  display: flex; gap: 0; margin-bottom: 14px;
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--paper-3);
+}
+.brief-meta > div { padding: 0 14px; border-right: 1px solid var(--rule); }
+.brief-meta > div:first-child { padding-left: 0; }
+.brief-meta > div:last-child { border-right: none; }
+.brief-meta strong { color: var(--paper); font-weight: 500; }
+
+.brief-title {
+  display: flex; align-items: flex-end; gap: 24px; margin-bottom: 10px;
+}
+.brief-code {
+  font-family: 'Big Shoulders Stencil Display', sans-serif;
+  font-weight: 700; font-size: 64px; line-height: 0.85;
+  color: var(--paper); letter-spacing: 0.04em;
+}
+.brief-name {
+  font-size: 14px; letter-spacing: 0.03em; color: var(--paper-2);
+  padding-bottom: 8px; flex: 1;
+}
+.brief-name strong { color: var(--paper); font-weight: 500; }
+
+.brief-stats {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+  margin-top: 18px; border: 1px solid var(--rule);
+}
+.stat-cell {
+  padding: 10px 14px; border-right: 1px solid var(--rule);
+  position: relative;
+}
+.stat-cell:last-child { border-right: none; }
+.stat-cell .stat-label {
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--paper-3);
+}
+.stat-cell .stat-value {
+  font-family: 'JetBrains Mono'; font-weight: 600; font-size: 22px;
+  color: var(--paper); margin-top: 4px; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-cell.signal .stat-value { color: var(--signal); }
+.stat-cell.amber .stat-value { color: var(--amber); }
+.stat-cell.ice .stat-value { color: var(--ice); }
+
+/* ──────────────── TOOLBAR ──────────────── */
+.toolbar {
+  display: flex; align-items: center; gap: 0; padding: 0 28px;
+  height: 38px; border-bottom: 1px solid var(--rule);
+  background: var(--ink-2);
+}
+.tb-btn {
+  height: 100%; padding: 0 16px; border: none; background: transparent;
+  color: var(--paper-3); cursor: pointer;
+  font-family: inherit; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  border-right: 1px solid var(--rule); border-bottom: 2px solid transparent;
+  display: flex; align-items: center; gap: 8px;
+}
+.tb-btn:hover { color: var(--paper); }
+.tb-btn.active { color: var(--amber); border-bottom-color: var(--amber); background: var(--ink); }
+.tb-btn svg { width: 12px; height: 12px; }
+.toolbar-spacer { flex: 1; border-right: 1px solid var(--rule); }
+.tb-input {
+  background: transparent; border: none; outline: none;
+  color: var(--paper); font-family: inherit; font-size: 11px;
+  padding: 0 14px; height: 100%;
+}
+.tb-input::placeholder { color: var(--paper-3); letter-spacing: 0.06em; text-transform: uppercase; font-size: 10px; }
+
+/* ──────────────── OBJECTIVE LIST ──────────────── */
+.objectives {
+  flex: 1; overflow-y: auto; padding: 8px 0;
+  background: var(--ink);
+}
+.objectives::-webkit-scrollbar { width: 8px; }
+.objectives::-webkit-scrollbar-track { background: transparent; }
+.objectives::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 0; }
+
+.cluster-header {
+  padding: 18px 28px 8px; display: flex; align-items: center; gap: 14px;
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--paper-3); font-weight: 500;
+}
+.cluster-header::after {
+  content: ''; flex: 1; height: 1px; background: var(--rule);
+  background-image: linear-gradient(to right, var(--rule) 50%, transparent 0%);
+  background-size: 6px 1px; background-repeat: repeat-x;
+}
+.cluster-header .cnt { color: var(--paper-2); font-family: 'JetBrains Mono'; }
+
+.obj {
+  display: grid;
+  grid-template-columns: 28px 86px 1fr 80px 88px 110px 60px 100px;
+  gap: 16px; align-items: center;
+  padding: 12px 28px;
+  border-bottom: 1px solid var(--ink-3);
+  cursor: pointer; transition: background 0.1s;
+  position: relative;
+}
+.obj:hover { background: var(--ink-2); }
+.obj.active { background: var(--ink-2); }
+.obj.active::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--amber);
+}
+
+/* Status indicator: aircraft cockpit lamp */
+.lamp {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1.5px solid var(--rule-strong); position: relative;
+  background: var(--ink);
+}
+.lamp.todo { border-color: var(--paper-3); }
+.lamp.run::before {
+  content: ''; position: absolute; inset: 2px; border-radius: 50%;
+  background: var(--ice); box-shadow: 0 0 10px var(--ice);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+.lamp.review {
+  border-color: var(--amber);
+}
+.lamp.review::before {
+  content: ''; position: absolute; inset: 2px; border-radius: 50%;
+  background: var(--amber); box-shadow: 0 0 10px var(--amber);
+}
+.lamp.done {
+  border-color: var(--signal); background: var(--signal);
+  box-shadow: 0 0 8px var(--signal-soft);
+}
+.lamp.done::after {
+  content: ''; position: absolute; left: 4px; top: 5px;
+  width: 6px; height: 3px;
+  border-left: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
+  transform: rotate(-45deg);
+}
+.lamp.blocked { border-color: var(--alert); }
+.lamp.blocked::before, .lamp.blocked::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 9px; height: 1.5px;
+  background: var(--alert); transform-origin: center;
+}
+.lamp.blocked::before { transform: translate(-50%, -50%) rotate(45deg); }
+.lamp.blocked::after { transform: translate(-50%, -50%) rotate(-45deg); }
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.obj-id {
+  font-family: 'JetBrains Mono'; font-size: 11px;
+  color: var(--paper-3); letter-spacing: 0.04em;
+  font-weight: 500; font-variant-numeric: tabular-nums;
+}
+.obj-id::before, .obj-id::after { color: var(--paper-3); opacity: 0.4; }
+.obj-id::before { content: '〔'; margin-right: 1px; }
+.obj-id::after { content: '〕'; margin-left: 1px; }
+
+.obj-title { font-size: 13px; color: var(--paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.005em; }
+.obj.active .obj-title { color: var(--amber); }
+
+/* Priority bars - signal level meter */
+.prio { display: flex; align-items: center; gap: 3px; height: 10px; }
+.prio-bar { width: 4px; background: var(--ink-4); border-radius: 0; }
+.prio-bar.b1 { height: 4px; }
+.prio-bar.b2 { height: 7px; }
+.prio-bar.b3 { height: 10px; }
+.prio.high .prio-bar.b1, .prio.high .prio-bar.b2, .prio.high .prio-bar.b3 { background: var(--alert); box-shadow: 0 0 4px var(--alert-soft); }
+.prio.med .prio-bar.b1, .prio.med .prio-bar.b2 { background: var(--amber); }
+.prio.med .prio-bar.b3 { background: var(--ink-4); }
+.prio.low .prio-bar.b1 { background: var(--paper-3); }
+.prio.low .prio-bar.b2, .prio.low .prio-bar.b3 { background: var(--ink-4); }
+
+/* Agent tag */
+.agent {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px; border: 1px solid var(--rule);
+  font-size: 10px; color: var(--paper-2); letter-spacing: 0.04em;
+}
+.agent .ag-dot { width: 6px; height: 6px; border-radius: 50%; }
+.agent .ag-dot.opus { background: var(--plum); }
+.agent .ag-dot.sonnet { background: var(--ice); }
+.agent .ag-dot.haiku { background: var(--signal); }
+
+/* Progress meter */
+.meter {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--paper-3); font-variant-numeric: tabular-nums;
+}
+.meter-track {
+  flex: 1; height: 4px; background: var(--ink-3); position: relative;
+}
+.meter-track::before {
+  content: ''; position: absolute; top: -2px; bottom: -2px; left: 0;
+  width: 1px; background: var(--rule-strong);
+}
+.meter-track::after {
+  content: ''; position: absolute; top: -2px; bottom: -2px; right: 0;
+  width: 1px; background: var(--rule-strong);
+}
+.meter-fill { height: 100%; background: var(--signal); position: relative; }
+.meter-fill::after {
+  content: ''; position: absolute; right: -4px; top: -3px;
+  width: 8px; height: 10px; background: var(--signal);
+}
+
+.elapsed { font-size: 10px; color: var(--paper-3); font-variant-numeric: tabular-nums; letter-spacing: 0.02em; text-align: right; }
+.elapsed strong { color: var(--paper); font-weight: 500; }
+
+/* Run command button */
+.run-btn {
+  height: 28px; padding: 0 14px; border: 1px solid var(--signal);
+  background: transparent; color: var(--signal);
+  font-family: inherit; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+  transition: all 0.12s; opacity: 0;
+}
+.obj:hover .run-btn { opacity: 1; }
+.run-btn:hover { background: var(--signal); color: var(--ink); }
+.run-btn .triangle {
+  width: 0; height: 0; border-left: 6px solid currentColor;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+}
+
+/* Currently running state */
+.obj.live { background: var(--ice-soft); }
+.obj.live::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--ice); box-shadow: 0 0 10px var(--ice);
+}
+.live-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 8px; background: var(--ice-soft);
+  border: 1px solid var(--ice); color: var(--ice);
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* ──────────────── TELEMETRY FOOTER ──────────────── */
+.telemetry {
+  position: relative; z-index: 10;
+  height: 24px; padding: 0 16px;
+  background: var(--ink-2); border-top: 1px solid var(--rule);
+  display: flex; align-items: center; gap: 0;
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--paper-3);
+}
+.telemetry > div { padding: 0 14px; border-right: 1px solid var(--rule); display: flex; align-items: center; gap: 6px; }
+.telemetry > div:first-child { padding-left: 0; }
+.telemetry > div:last-child { border-right: none; padding-right: 0; }
+.telemetry strong { color: var(--paper); font-weight: 500; }
+.telemetry .signal-text { color: var(--signal); }
+.telemetry .amber-text { color: var(--amber); }
+.telemetry-spacer { flex: 1; border-right: 1px solid var(--rule); }
+
+/* Scan line sweep across briefing */
+.briefing { overflow: hidden; }
+.briefing .sweep {
+  position: absolute; top: 0; bottom: 0; width: 200px;
+  background: linear-gradient(90deg, transparent, var(--amber-soft), transparent);
+  pointer-events: none; opacity: 0.4;
+  animation: sweep 8s linear infinite;
+}
+@keyframes sweep {
+  0% { left: -200px; }
+  100% { left: 100%; }
+}
+
+/* Boot stagger animation */
+.hud, .sidebar, .briefing, .toolbar, .obj, .telemetry { animation: bootIn 0.4s ease-out backwards; }
+.hud { animation-delay: 0s; }
+.sidebar { animation-delay: 0.05s; }
+.briefing { animation-delay: 0.1s; }
+.toolbar { animation-delay: 0.15s; }
+.obj:nth-child(1) { animation-delay: 0.2s; }
+.obj:nth-child(2) { animation-delay: 0.23s; }
+.obj:nth-child(3) { animation-delay: 0.26s; }
+.obj:nth-child(4) { animation-delay: 0.29s; }
+.telemetry { animation-delay: 0.4s; }
+@keyframes bootIn {
+  from { opacity: 0; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mockup banner */
+.banner {
+  position: fixed; top: 36px; right: 12px; z-index: 1000;
+  background: var(--amber); color: var(--ink); padding: 4px 10px;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700;
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+<div class="banner">Mockup D · Mission Control</div>
+
+<!-- ─────────────── HUD STRIP ─────────────── -->
+<header class="hud">
+  <div class="hud-cell">
+    <span class="led"></span>
+    <span><strong>SYS</strong> ONLINE</span>
+  </div>
+  <div class="hud-cell">
+    <span><strong>SYNC</strong> 02:47:18 UTC</span>
+  </div>
+  <div class="hud-cell">
+    <span class="led amber"></span>
+    <span><strong>3</strong> AGENTS RUNNING</span>
+  </div>
+  <div class="hud-cell">
+    <span><strong>207</strong> TESTS PASSING</span>
+  </div>
+  <div class="hud-cell">
+    <span>BUILD <strong>v0.1.0-rc.4</strong></span>
+  </div>
+  <div class="hud-spacer"></div>
+  <div class="hud-cell">
+    <span>WIT // <strong>OPERATOR</strong></span>
+  </div>
+</header>
+
+<!-- ─────────────── SHELL ─────────────── -->
+<div class="shell">
+
+  <!-- ───── SIDEBAR ───── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><span></span></div>
+      <div>
+        <div class="brand-name">PWTASK</div>
+        <div class="brand-sub">// Mission Ctrl</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Active Missions <span class="num">02</span></div>
+      <div class="proj active">
+        <div class="proj-icon"></div>
+        <div class="proj-name">Desktop App / Tauri</div>
+        <div class="proj-count">14</div>
+      </div>
+      <div class="proj">
+        <div class="proj-icon"></div>
+        <div class="proj-name">NewsReport</div>
+        <div class="proj-count">03</div>
+      </div>
+      <div class="action-row">New mission</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Filters</div>
+      <div class="proj"><div class="proj-icon" style="background:var(--paper-3)"></div><div class="proj-name">All objectives</div><div class="proj-count">22</div></div>
+      <div class="proj"><div class="proj-icon" style="background:var(--ice)"></div><div class="proj-name">In progress</div><div class="proj-count">03</div></div>
+      <div class="proj"><div class="proj-icon" style="background:var(--amber)"></div><div class="proj-name">Awaiting review</div><div class="proj-count">05</div></div>
+      <div class="proj"><div class="proj-icon" style="background:var(--alert)"></div><div class="proj-name">Blocked</div><div class="proj-count">00</div></div>
+    </div>
+
+    <div class="system-panel">
+      <div class="sys-line"><span>RUST.SVC</span><strong class="ok">● OK</strong></div>
+      <div class="sys-line"><span>SPECTA.GEN</span><strong class="ok">● OK</strong></div>
+      <div class="sys-line"><span>FS.WATCH</span><strong class="ok">● OK</strong></div>
+      <div class="sys-line"><span>PATCHES.PEND</span><strong>00</strong></div>
+      <div class="sys-line"><span>UPTIME</span><strong>04:23:11</strong></div>
+    </div>
+  </aside>
+
+  <!-- ───── MAIN ───── -->
+  <main class="main">
+
+    <!-- BRIEFING -->
+    <section class="briefing">
+      <div class="sweep"></div>
+
+      <div class="brief-meta">
+        <div>Mission <strong>// PROJ-TAURI-001</strong></div>
+        <div>Sprint <strong>02</strong></div>
+        <div>Phase <strong>1.6</strong> · Move To Rust</div>
+        <div>Day <strong>02</strong> / 14</div>
+      </div>
+
+      <div class="brief-title">
+        <div class="brief-code">PWT&middot;14</div>
+        <div class="brief-name">
+          <strong>Desktop App / Tauri</strong> <br>
+          แปลง AI Task Flow Dashboard เป็น Tauri desktop app · plan · play · review · re-run
+        </div>
+      </div>
+
+      <div class="brief-stats">
+        <div class="stat-cell">
+          <div class="stat-label">Total</div>
+          <div class="stat-value">22</div>
+        </div>
+        <div class="stat-cell ice">
+          <div class="stat-label">Active</div>
+          <div class="stat-value">03</div>
+        </div>
+        <div class="stat-cell amber">
+          <div class="stat-label">Review</div>
+          <div class="stat-value">05</div>
+        </div>
+        <div class="stat-cell signal">
+          <div class="stat-label">Done</div>
+          <div class="stat-value">09</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-label">Progress</div>
+          <div class="stat-value">63<span style="font-size:13px;color:var(--paper-3)">%</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <button class="tb-btn active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Roster
+      </button>
+      <button class="tb-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="6" height="18"/><rect x="11" y="3" width="6" height="12"/><rect x="19" y="3" width="2" height="6"/></svg>
+        Board
+      </button>
+      <button class="tb-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18"/></svg>
+        Topo
+      </button>
+      <input class="tb-input" placeholder="// search objectives, agents, IDs">
+      <div class="toolbar-spacer"></div>
+      <button class="tb-btn">Filter / 04</button>
+      <button class="tb-btn">Group / Status</button>
+      <button class="tb-btn" style="color:var(--signal)">+ New</button>
+    </div>
+
+    <!-- OBJECTIVES -->
+    <div class="objectives">
+
+      <div class="cluster-header">
+        <span>Cluster // Active</span>
+        <span class="cnt">03</span>
+      </div>
+
+      <div class="obj live">
+        <div><div class="lamp run"></div></div>
+        <div class="obj-id">PWT-014</div>
+        <div class="obj-title">Move Patch System to Rust + fix idempotency</div>
+        <div class="prio high"><div class="prio-bar b1"></div><div class="prio-bar b2"></div><div class="prio-bar b3"></div></div>
+        <div><span class="agent"><span class="ag-dot opus"></span>OPUS</span></div>
+        <div class="meter"><span>60</span><div class="meter-track"><div class="meter-fill" style="width:60%"></div></div></div>
+        <div class="elapsed"><strong>04:12</strong></div>
+        <div><span class="live-tag">● Live</span></div>
+      </div>
+
+      <div class="obj active">
+        <div><div class="lamp run"></div></div>
+        <div class="obj-id">PWT-013</div>
+        <div class="obj-title">Move Agent Routing to Rust</div>
+        <div class="prio high"><div class="prio-bar b1"></div><div class="prio-bar b2"></div><div class="prio-bar b3"></div></div>
+        <div><span class="agent"><span class="ag-dot opus"></span>OPUS</span></div>
+        <div class="meter"><span>30</span><div class="meter-track"><div class="meter-fill" style="width:30%"></div></div></div>
+        <div class="elapsed">15<span style="color:var(--paper-3)">m</span></div>
+        <div><button class="run-btn"><span class="triangle"></span>Stop</button></div>
+      </div>
+
+      <div class="obj">
+        <div><div class="lamp run"></div></div>
+        <div class="obj-id">PWT-021</div>
+        <div class="obj-title">UI Redesign · phase 2</div>
+        <div class="prio med"><div class="prio-bar b1"></div><div class="prio-bar b2"></div><div class="prio-bar b3"></div></div>
+        <div><span class="agent"><span class="ag-dot sonnet"></span>SONNET</span></div>
+        <div class="meter"><span>05</span><div class="meter-track"><div class="meter-fill" style="width:5%"></div></div></div>
+        <div class="elapsed">02<span style="color:var(--paper-3)">m</span></div>
+        <div><button class="run-btn"><span class="triangle"></span>Run</button></div>
+      </div>
+
+      <div class="cluster-header">
+        <span>Cluster // Awaiting Review</span>
+        <span class="cnt">05</span>
+      </div>
+
+      <div class="obj">
+        <div><div class="lamp review"></div></div>
+        <div class="obj-id">PWT-012</div>
+        <div class="obj-title">Move Domain Types + Tree Helpers to Rust</div>
+        <div class="prio high"><div class="prio-bar b1"></div><div class="prio-bar b2"></div><div class="prio-bar b3"></div></div>
+        <div><span class="agent"><span class="ag-dot opus"></span>OPUS</span></div>
+        <div class="meter"><span>100</span><div class="meter-track"><div class="meter-fill" style="width:100%"></div></div></div>
+        <div class="elapsed">31 tests<br><span style="color:var(--signal)">● PASS</span></div>
+        <div><button class="run-btn">Approve →</button></div>
+      </div>
+
+      <div class="obj">
+        <div><div class="lamp review"></div></div>
+        <div class="obj-id">PWT-011</div>
+        <div class="obj-title">tauri-specta // type-safe IPC bindings</div>
+        <div class="prio high"><div class="prio-bar b1"></div><div class="prio-bar b2"></div><div class="prio-bar b3"></div></div>
+        <div><span class="agent"><span class="ag-dot sonnet"></span>SONNET</span></div>
+        <div class="meter"><span>100</span><div class="meter-track"><div class="meter-fill" style="width:100%"></div></div></div>
+        <div class="elapsed">154 LOC</div>
+        <div><button class="run-btn">Approve →</button></div>
+      </div>
+
+      <div class="obj">
+        <div><div class="lamp review"></div></div>
+        <div class="obj-id">PWT-010</div>
+        <div class="obj-title">JS logger + global error handlers</div>
+        <div class="prio med"><div class="prio-bar b1"></div><div class="prio-bar b2"></div><div class="prio-bar b3"></div></div>
+        <div><span class="agent"><span class="ag-dot sonnet"></span>SONNET</span></div>
+        <div class="meter"><span>100</span><div class="meter-track"><div class="meter-fill" style="width:100%"></div></div></div>
+        <div class="elapsed">06 sites</div>
+        <div><button class="run-btn">Approve →</button></div>
+      </div>
+
+      <div class="cluster-header">
+        <span>Cluster // Standby</span>
+        <span class="cnt">06</span>
+      </div>
+
+      <div class="obj">
+        <div><div class="lamp todo"></div></div>
+        <div class="obj-id">PWT-015</div>
+        <div class="obj-title">Move DB Layer to Rust + atomic write</div>
+        <div class="prio high"><div class="prio-bar b1"></div><div class="prio-bar b2"></div><div class="prio-bar b3"></div></div>
+        <div><span class="agent"><span class="ag-dot opus"></span>OPUS</span></div>
+        <div class="meter"><span style="opacity:0.3">--</span><div class="meter-track"></div></div>
+        <div class="elapsed" style="opacity:0.3">--:--</div>
+        <div><button class="run-btn"><span class="triangle"></span>Run</button></div>
+      </div>
+
+      <div class="obj">
+        <div><div class="lamp todo"></div></div>
+        <div class="obj-id">PWT-016</div>
+        <div class="obj-title">Code signing // Win .pfx + macOS Developer ID</div>
+        <div class="prio med"><div class="prio-bar b1"></div><div class="prio-bar b2"></div><div class="prio-bar b3"></div></div>
+        <div><span class="agent"><span class="ag-dot sonnet"></span>DEVOPS</span></div>
+        <div class="meter"><span style="opacity:0.3">--</span><div class="meter-track"></div></div>
+        <div class="elapsed" style="opacity:0.3">--:--</div>
+        <div><button class="run-btn"><span class="triangle"></span>Run</button></div>
+      </div>
+
+      <div class="obj">
+        <div><div class="lamp todo"></div></div>
+        <div class="obj-id">PWT-017</div>
+        <div class="obj-title">Add changelog automation</div>
+        <div class="prio low"><div class="prio-bar b1"></div><div class="prio-bar b2"></div><div class="prio-bar b3"></div></div>
+        <div><span class="agent"><span class="ag-dot haiku"></span>HAIKU</span></div>
+        <div class="meter"><span style="opacity:0.3">--</span><div class="meter-track"></div></div>
+        <div class="elapsed" style="opacity:0.3">--:--</div>
+        <div><button class="run-btn"><span class="triangle"></span>Run</button></div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<!-- ─────────────── TELEMETRY FOOTER ─────────────── -->
+<footer class="telemetry">
+  <div><span class="led" style="width:6px;height:6px;background:var(--signal);box-shadow:0 0 4px var(--signal)"></span><strong>SAVED</strong></div>
+  <div>VITEST <strong class="signal-text">141 / 141</strong></div>
+  <div>CARGO <strong class="signal-text">66 / 66</strong></div>
+  <div>COVERAGE <strong>87.9 %</strong></div>
+  <div>TYPES <strong class="signal-text">CLEAN</strong></div>
+  <div class="telemetry-spacer"></div>
+  <div>RUNNING <strong class="amber-text">02 AGENTS</strong></div>
+  <div>NEXT SYNC <strong>00:13</strong></div>
+  <div>⌘K <strong>COMMAND</strong></div>
+</footer>
+
+</body>
+</html>

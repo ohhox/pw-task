@@ -2,6 +2,15 @@
 // Owns: pure helpers (uuid, date, escaping), task lookup/traversal, progress
 //       calculation, model metadata, and Markdown rendering.
 // Does NOT: touch DOM beyond the toast helper, call Tauri, or mutate state.
+//
+// Phase 1.6.2 note: the tree helpers in this file (countByStatus, calcProgress,
+// findTaskAnywhere, isFullyDone, autoEscalate, findNextRunnablePath, etc.)
+// are intentionally kept synchronous because they run in DOM render hot
+// paths (see render.ts:buildTaskNode). The canonical Rust port lives in
+// `src-tauri/src/tree.rs` and is exposed asynchronously via `data-rs.ts`
+// for any caller that can tolerate IPC. Both implementations are tested
+// against the same logic so they must stay in lock-step.
+import { getLogger } from '../logger.js';
 import { db, activeProjectId } from './state.js';
 import type { Task, Project, TaskStatus } from '../types/domain';
 
@@ -10,6 +19,8 @@ declare const marked: {
   parse(input: string): string;
   use(opts: Record<string, unknown>): void;
 } | undefined;
+
+const log = getLogger('data');
 
 export function uuid(): string {
   return crypto.randomUUID();
@@ -119,7 +130,7 @@ export function renderMd(text: string | null | undefined): string {
     try {
       return marked.parse(String(text));
     } catch (e) {
-      console.warn('marked parse failed, falling back:', e);
+      log.warn('marked parse failed, falling back', { error: e instanceof Error ? e.message : String(e) });
     }
   }
   // Fallback: minimal escape if marked is unavailable (e.g. CDN blocked)

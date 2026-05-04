@@ -1,0 +1,253 @@
+{
+  "version": "1.0",
+  "schemaVersion": "1.1",
+  "lastUpdated": "2026-05-03T00:00:00.000Z",
+  "appliedPatches": [],
+  "_instructions": {
+    "forAI": "This is a SAMPLE workspace. Tasks here demo the full feature set (all statuses, agents, tags, subtasks, reviews, run history). Safe to delete the entire workspace once user is comfortable — see 'Sample Tour' project's last task.",
+    "patchPattern": {
+      "description": "Sample data — see CLAUDE.md for real patch format.",
+      "changeTypes": {}
+    }
+  },
+  "agents": [],
+  "projects": [
+    {
+      "id": "proj-tour-001",
+      "name": "Sample Tour",
+      "description": "👋 ยินดีต้อนรับ — โปรเจกต์ตัวอย่างที่โชว์ทุก feature ของ PwTask\n\nลองคลิก task ใน list, เปิด detail panel, กดปุ่ม ▶ Run บน task ที่มี prompt, ดู review flow, kanban view, ฯลฯ\n\nลบ workspace นี้เมื่อพร้อมเริ่มงานจริง — ดู task สุดท้ายในโปรเจกต์",
+      "color": "#0052CC",
+      "goal": "ให้ผู้ใช้ใหม่เข้าใจ workflow + AI orchestration ภายใน 5 นาที",
+      "workingDir": "",
+      "createdAt": "2026-05-03T00:00:00.000Z",
+      "tasks": [
+        {
+          "id": "task-tour-01",
+          "title": "👋 เริ่มที่นี่ — สำรวจ task list",
+          "description": "**ยินดีต้อนรับ!** Task นี้แสดงให้เห็น **detail panel** ของ PwTask\n\n## สิ่งที่ลองเลย\n- คลิก task อื่นใน list ดู detail แต่ละแบบ\n- กดปุ่ม `▼ Description` ที่ accordion เพื่อ expand\n- ปุ่ม chip บนสุด (Status, Priority, Agent, Model) คลิกเพื่อแก้ inline\n- กดปุ่มสีน้ำเงินด้านบน เพื่อ copy task ID\n\n## Status badges\n- 🔵 **In Progress** — กำลังทำ\n- 🟡 **Pending Review** — เสร็จแล้ว รอ approve\n- 🟢 **Done** — approved\n- 🔴 **Blocked** — ติดปัญหา",
+          "status": "in_progress",
+          "priority": "high",
+          "agentId": "executor",
+          "aiAgent": "Executor",
+          "model": null,
+          "prompt": "",
+          "tags": ["onboarding", "tutorial"],
+          "subtasks": [
+            {
+              "id": "task-tour-01-01",
+              "title": "ลองคลิก subtask นี้",
+              "description": "Subtasks อยู่ใต้ parent task — แตะ tree-line ทางซ้าย",
+              "status": "done",
+              "priority": "low",
+              "agentId": "executor",
+              "aiAgent": "Executor",
+              "model": null,
+              "prompt": "",
+              "tags": [],
+              "subtasks": [],
+              "filesModified": [],
+              "lastSessionId": null,
+              "runHistory": [],
+              "activityLog": [
+                { "timestamp": "2026-05-03T00:01:00.000Z", "agent": "Manual", "action": "marked done as part of tutorial" }
+              ],
+              "reviews": [],
+              "createdAt": "2026-05-03T00:00:00.000Z",
+              "completedAt": "2026-05-03T00:01:00.000Z"
+            },
+            {
+              "id": "task-tour-01-02",
+              "title": "Subtask ถัดไป — ทำให้ parent ขึ้นเป็น in_progress อัตโนมัติ",
+              "description": "ทำ task นี้ → parent จะถูก auto-escalate",
+              "status": "todo",
+              "priority": "medium",
+              "agentId": "executor",
+              "aiAgent": "Executor",
+              "model": null,
+              "prompt": "",
+              "tags": [],
+              "subtasks": [],
+              "filesModified": [],
+              "lastSessionId": null,
+              "runHistory": [],
+              "activityLog": [],
+              "reviews": [],
+              "createdAt": "2026-05-03T00:00:00.000Z"
+            }
+          ],
+          "filesModified": [],
+          "lastSessionId": null,
+          "runHistory": [],
+          "activityLog": [
+            { "timestamp": "2026-05-03T00:00:00.000Z", "agent": "Manual", "action": "created — onboarding entry point" }
+          ],
+          "reviews": [],
+          "createdAt": "2026-05-03T00:00:00.000Z",
+          "lastNote": {
+            "timestamp": "2026-05-03T00:01:00.000Z",
+            "agent": "Welcome",
+            "summary": "นี่คือ last note — ปรากฏใต้ task title ใน list และใน detail. AI agent จะใส่ note นี้หลังจบ session"
+          }
+        },
+        {
+          "id": "task-tour-02",
+          "title": "🤖 ลองรัน AI Agent",
+          "description": "## Run a Task with Claude\n\nText ใน **Prompt** ด้านล่างคือคำสั่งที่จะส่งให้ Claude\n\nกด `▶ Run` → เห็น output streaming ใน terminal panel\n\nหลังจบ → status เปลี่ยนเป็น **Pending Review** อัตโนมัติ + last note + run history",
+          "status": "pending_review",
+          "priority": "high",
+          "agentId": "executor",
+          "aiAgent": "Executor",
+          "model": "claude-sonnet-4-6",
+          "prompt": "ลองตอบมาว่า PwTask คืออะไร — สั้นๆ 2 ประโยค",
+          "tags": ["onboarding", "ai-demo"],
+          "subtasks": [],
+          "filesModified": [],
+          "lastSessionId": "ses-demo-001",
+          "runHistory": [
+            {
+              "timestamp": "2026-05-03T00:05:00.000Z",
+              "agent": "Claude",
+              "agentId": "executor",
+              "model": "claude-sonnet-4-6",
+              "sessionId": "ses-demo-001",
+              "summary": "Generated demo response. Click 'View Full Output' to see streamed text.",
+              "outputFile": null
+            }
+          ],
+          "activityLog": [
+            { "timestamp": "2026-05-03T00:04:00.000Z", "agent": "Manual", "action": "started run" },
+            { "timestamp": "2026-05-03T00:05:00.000Z", "agent": "Claude", "action": "completed run → pending_review" }
+          ],
+          "reviews": [],
+          "createdAt": "2026-05-03T00:00:00.000Z",
+          "lastNote": {
+            "timestamp": "2026-05-03T00:05:00.000Z",
+            "agent": "Claude",
+            "summary": "PwTask = desktop app สำหรับ orchestrate AI agent ทำงาน software dev — patch-based approval workflow ป้องกัน data corruption"
+          }
+        },
+        {
+          "id": "task-tour-03",
+          "title": "✅ Approve / Request Changes",
+          "description": "## Review Flow\n\nTask ที่ status = **Pending Review** จะแสดง **review panel** ด้านล่าง\n\n2 ปุ่ม:\n- **✅ Approve** → status → done (Manual + comment optional)\n- **↩️ Request Changes** → ใส่ feedback → กด Re-run (Fresh / Resume session) — Claude ทำใหม่ตาม feedback",
+          "status": "pending_review",
+          "priority": "medium",
+          "agentId": "reviewer",
+          "aiAgent": "Reviewer",
+          "model": "claude-sonnet-4-6",
+          "prompt": "Review this code for security issues",
+          "tags": ["review-demo"],
+          "subtasks": [],
+          "filesModified": ["src/example.ts"],
+          "lastSessionId": null,
+          "runHistory": [],
+          "activityLog": [],
+          "reviews": [],
+          "createdAt": "2026-05-03T00:00:00.000Z"
+        },
+        {
+          "id": "task-tour-04",
+          "title": "🚧 Blocked tasks — รอ dependency",
+          "description": "Task ที่ติดปัญหา / รอ resource → mark as **Blocked**\n\nUI จะแสดง border สีแดงเตือน",
+          "status": "blocked",
+          "priority": "low",
+          "agentId": "executor",
+          "aiAgent": "Executor",
+          "model": null,
+          "prompt": "",
+          "tags": ["blocked", "demo"],
+          "subtasks": [],
+          "filesModified": [],
+          "lastSessionId": null,
+          "runHistory": [],
+          "activityLog": [
+            { "timestamp": "2026-05-03T00:00:00.000Z", "agent": "Manual", "action": "blocked — waiting for design approval" }
+          ],
+          "reviews": [],
+          "createdAt": "2026-05-03T00:00:00.000Z"
+        },
+        {
+          "id": "task-tour-05",
+          "title": "🎨 ลอง Multi-view (Board / Timeline)",
+          "description": "Click tab `Board` ที่ project header → เห็น tasks เป็น **Kanban columns** drag ระหว่าง columns ได้\n\nClick `Timeline` → เห็น tasks ตาม createdAt timeline",
+          "status": "todo",
+          "priority": "medium",
+          "agentId": "frontend-dev",
+          "aiAgent": "Frontend Developer",
+          "model": "claude-sonnet-4-6",
+          "prompt": "",
+          "tags": ["ui", "views"],
+          "subtasks": [],
+          "filesModified": [],
+          "lastSessionId": null,
+          "runHistory": [],
+          "activityLog": [],
+          "reviews": [],
+          "createdAt": "2026-05-03T00:00:00.000Z"
+        },
+        {
+          "id": "task-tour-06",
+          "title": "⌘K Command Palette",
+          "description": "กด **Ctrl+K** (Mac: Cmd+K) — เปิด command palette\n- Search task across projects\n- Run command (Save, Sync, Archive)\n- Jump to recent",
+          "status": "todo",
+          "priority": "low",
+          "agentId": "executor",
+          "aiAgent": "Executor",
+          "model": null,
+          "prompt": "",
+          "tags": ["keyboard", "power-user"],
+          "subtasks": [],
+          "filesModified": [],
+          "lastSessionId": null,
+          "runHistory": [],
+          "activityLog": [],
+          "reviews": [],
+          "createdAt": "2026-05-03T00:00:00.000Z"
+        },
+        {
+          "id": "task-tour-07",
+          "title": "✅ Done — สำเร็จแล้ว!",
+          "description": "Task ที่ approve แล้ว status = **done** แสดง strikethrough\n\nไปที่ **Archive** (📦 ปุ่มมุมขวาบน) เพื่อย้าย done tasks ไปเก็บ — สะอาดตา",
+          "status": "done",
+          "priority": "low",
+          "agentId": "executor",
+          "aiAgent": "Executor",
+          "model": null,
+          "prompt": "",
+          "tags": ["done-demo"],
+          "subtasks": [],
+          "filesModified": [],
+          "lastSessionId": null,
+          "runHistory": [],
+          "activityLog": [
+            { "timestamp": "2026-05-03T00:00:00.000Z", "agent": "Manual", "action": "approved → done" }
+          ],
+          "reviews": [
+            { "timestamp": "2026-05-03T00:00:00.000Z", "action": "approved", "comment": "Looks good!", "reviewer": "Manual" }
+          ],
+          "createdAt": "2026-05-03T00:00:00.000Z",
+          "completedAt": "2026-05-03T00:00:00.000Z"
+        },
+        {
+          "id": "task-tour-99",
+          "title": "🗑 พร้อมเริ่มงานจริง? — ลบ Sample Tour",
+          "description": "เมื่อคุ้นชินแล้ว:\n1. กดปุ่ม **🗑 Delete** ที่ project header (มุมขวาบน)\n2. หรือสร้าง project ใหม่ด้วยปุ่ม **＋ New Project** ในsidebar\n3. ตั้ง **Working Dir** ชี้ไปยังโปรเจกต์ของคุณ\n4. Export `CLAUDE.md` (ปุ่ม 📋) ไปวางใน root project ของคุณ\n5. เริ่มเพิ่ม task ของคุณ — หรือกด `✨ Plan` ให้ AI ช่วยแตก task จาก goal",
+          "status": "todo",
+          "priority": "low",
+          "agentId": "executor",
+          "aiAgent": "Executor",
+          "model": null,
+          "prompt": "",
+          "tags": ["cleanup", "next-steps"],
+          "subtasks": [],
+          "filesModified": [],
+          "lastSessionId": null,
+          "runHistory": [],
+          "activityLog": [],
+          "reviews": [],
+          "createdAt": "2026-05-03T00:00:00.000Z"
+        }
+      ]
+    }
+  ]
+}

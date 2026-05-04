@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PwTask Mockup B — Things3 / Notion Calm</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #FBFAF7;
+  --surface: #FFFFFF;
+  --surface2: #F5F3EE;
+  --border: #ECE9E2;
+  --border-strong: #DDD9D0;
+  --text: #2C2A26;
+  --text-2: #6B6862;
+  --text-3: #9A968D;
+  --accent: #6366F1;
+  --accent-soft: rgba(99,102,241,0.08);
+  --green: #16A34A;
+  --orange: #EA580C;
+  --red: #DC2626;
+  --blue: #2563EB;
+  --yellow: #CA8A04;
+  --gray: #78716C;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.06);
+  --radius: 10px;
+}
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+/* ===== APP ===== */
+.app { display: flex; height: 100vh; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 260px; flex-shrink: 0;
+  background: var(--surface2); padding: 20px 14px;
+  display: flex; flex-direction: column; gap: 24px;
+  border-right: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; }
+.brand-mark {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  display: flex; align-items: center; justify-content: center; color: #fff;
+  font-weight: 700; font-size: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.brand-name { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+
+.side-section { display: flex; flex-direction: column; gap: 2px; }
+.side-label {
+  font-size: 11px; font-weight: 600; color: var(--text-3);
+  padding: 6px 12px; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.side-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 8px;
+  font-size: 14px; color: var(--text); cursor: pointer;
+  transition: background 0.12s;
+}
+.side-item:hover { background: rgba(0,0,0,0.04); }
+.side-item.active { background: var(--surface); box-shadow: var(--shadow-sm); }
+.side-item .ico { font-size: 16px; }
+.side-item .count { margin-left: auto; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+.side-spacer { flex: 1; }
+.theme-toggle {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  background: var(--surface); border-radius: 8px; box-shadow: var(--shadow-sm);
+  font-size: 12px; color: var(--text-2);
+}
+.theme-pill { display: flex; gap: 2px; background: var(--surface2); border-radius: 99px; padding: 2px; }
+.theme-pill button {
+  padding: 4px 10px; border: none; background: transparent;
+  border-radius: 99px; font-size: 11px; cursor: pointer; color: var(--text-3);
+}
+.theme-pill button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+
+/* ===== TASK PANE (left of split) ===== */
+.taskpane {
+  width: 50%; min-width: 360px; flex-shrink: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+  border-right: 1px solid var(--border);
+}
+.taskpane-header {
+  padding: 32px 36px 16px;
+}
+.proj-emoji { font-size: 32px; margin-bottom: 12px; }
+.proj-title { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.proj-desc { font-size: 14px; color: var(--text-2); margin-top: 6px; max-width: 480px; line-height: 1.6; }
+.proj-meta-row {
+  display: flex; gap: 20px; margin-top: 16px; padding-top: 16px;
+  border-top: 1px solid var(--border); font-size: 12px; color: var(--text-3);
+}
+.proj-meta-row span { display: flex; align-items: center; gap: 5px; }
+
+.taskpane-toolbar {
+  display: flex; gap: 6px; padding: 8px 36px;
+  border-bottom: 1px solid var(--border); align-items: center;
+}
+.tab {
+  padding: 6px 12px; border-radius: 6px;
+  font-size: 13px; color: var(--text-2); cursor: pointer;
+  transition: all 0.12s;
+}
+.tab:hover { background: var(--surface2); }
+.tab.active { background: var(--surface); color: var(--text); font-weight: 500; box-shadow: var(--shadow-sm); }
+.tab .badge { display: inline-block; padding: 1px 6px; background: var(--surface2); border-radius: 99px; font-size: 11px; color: var(--text-3); margin-left: 5px; }
+.tab.active .badge { background: var(--accent-soft); color: var(--accent); }
+
+.tasks { flex: 1; overflow-y: auto; padding: 16px 24px 60px; }
+
+/* ===== TASK CARD ===== */
+.task-card {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 14px 16px; border-radius: 10px;
+  cursor: pointer; transition: background 0.12s;
+  margin-bottom: 4px;
+}
+.task-card:hover { background: var(--surface); box-shadow: var(--shadow-sm); }
+.task-card.selected { background: var(--surface); box-shadow: var(--shadow-md); border: 1px solid var(--border-strong); padding: 13px 15px; }
+.task-checkbox {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1.5px solid var(--border-strong); flex-shrink: 0;
+  margin-top: 2px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.task-checkbox:hover { border-color: var(--accent); background: var(--accent-soft); }
+.task-checkbox.checked { background: var(--green); border-color: var(--green); }
+.task-checkbox.checked::after { content: ''; width: 8px; height: 4px; border: 2px solid #fff; border-top: 0; border-right: 0; transform: rotate(-45deg) translateY(-1px); }
+.task-checkbox.in_progress { border-color: var(--blue); background: radial-gradient(var(--blue) 25%, transparent 32%); border-style: dashed; }
+.task-checkbox.review { border-color: var(--orange); background: radial-gradient(var(--orange) 25%, transparent 32%); }
+
+.task-body { flex: 1; min-width: 0; }
+.task-title { font-size: 15px; line-height: 1.45; color: var(--text); }
+.task-title.done { text-decoration: line-through; color: var(--text-3); }
+.task-meta { display: flex; align-items: center; gap: 10px; margin-top: 6px; font-size: 12px; color: var(--text-3); }
+.task-meta span { display: flex; align-items: center; gap: 4px; }
+.tag-chip {
+  padding: 1px 8px; border-radius: 99px; background: var(--surface2);
+  font-size: 11px; color: var(--text-2); border: 1px solid var(--border);
+}
+.tag-chip.high { background: rgba(220,38,38,0.08); color: var(--red); border-color: rgba(220,38,38,0.2); }
+.tag-chip.med { background: rgba(202,138,4,0.08); color: var(--yellow); border-color: rgba(202,138,4,0.2); }
+.tag-chip.review { background: rgba(234,88,12,0.08); color: var(--orange); border-color: rgba(234,88,12,0.2); }
+
+.task-section-header {
+  font-size: 12px; font-weight: 600; color: var(--text-3);
+  padding: 16px 16px 8px; text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+/* ===== DETAIL (right of split) ===== */
+.detail {
+  flex: 1; overflow-y: auto;
+  padding: 48px 56px 80px;
+  background: var(--surface);
+}
+.detail-breadcrumb { font-size: 12px; color: var(--text-3); margin-bottom: 12px; }
+.detail-breadcrumb a { color: var(--text-3); text-decoration: none; }
+.detail-breadcrumb a:hover { color: var(--text); }
+.detail-title {
+  font-size: 32px; font-weight: 700; letter-spacing: -0.02em;
+  border: none; outline: none; width: 100%; padding: 0;
+  background: transparent; color: var(--text);
+  font-family: inherit; line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.detail-chips { display: flex; gap: 8px; margin: 20px 0 28px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 8px;
+  background: var(--surface2); border: 1px solid var(--border);
+  font-size: 12px; color: var(--text-2); cursor: pointer;
+  transition: all 0.12s;
+}
+.chip:hover { background: rgba(0,0,0,0.04); border-color: var(--border-strong); }
+.chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.detail-section { margin-bottom: 32px; }
+.detail-section-label {
+  font-size: 11px; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;
+}
+.inline-edit-area {
+  width: 100%; min-height: 80px;
+  padding: 14px 16px; border-radius: 8px;
+  background: var(--surface2); border: 1px solid transparent;
+  font-family: inherit; font-size: 14px; color: var(--text);
+  outline: none; resize: vertical; line-height: 1.65;
+  transition: all 0.15s;
+}
+.inline-edit-area:hover { background: rgba(0,0,0,0.025); }
+.inline-edit-area:focus { background: var(--surface); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.run-block {
+  padding: 16px; border-radius: 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+}
+.run-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 18px; border-radius: 8px;
+  background: var(--accent); color: #fff; border: none;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: all 0.12s;
+  box-shadow: 0 1px 2px rgba(99,102,241,0.4);
+}
+.btn-primary:hover { background: #4F46E5; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.35); }
+.btn-secondary {
+  padding: 10px 14px; border-radius: 8px;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border-strong);
+  font-size: 13px; cursor: pointer; transition: all 0.12s;
+}
+.btn-secondary:hover { background: var(--surface2); }
+
+.terminal {
+  background: #1A1B1F; color: #B6BCD0;
+  border-radius: 8px; padding: 16px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px; line-height: 1.7;
+  max-height: 280px; overflow-y: auto;
+  margin-top: 12px;
+}
+.terminal .ok { color: #86EFAC; }
+.terminal .warn { color: #FCD34D; }
+.terminal .info { color: #93C5FD; }
+
+.subtask-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  cursor: pointer; transition: background 0.12s;
+}
+.subtask-row:hover { background: var(--surface2); }
+.subtask-checkbox {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1.5px solid var(--border-strong); flex-shrink: 0;
+}
+.subtask-checkbox.done { background: var(--green); border-color: var(--green); }
+.subtask-title { flex: 1; font-size: 14px; }
+.subtask-meta { font-size: 11px; color: var(--text-3); }
+
+.activity-log { display: flex; flex-direction: column; gap: 8px; }
+.log-entry {
+  display: flex; gap: 12px; padding: 8px 0;
+  font-size: 13px; color: var(--text-2);
+}
+.log-entry .agent-pill {
+  padding: 1px 8px; border-radius: 99px;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: 11px; font-weight: 500; flex-shrink: 0;
+}
+.log-entry .log-time { color: var(--text-3); font-size: 11px; flex-shrink: 0; min-width: 60px; }
+
+/* Mockup banner */
+.mockup-banner {
+  position: fixed; top: 12px; right: 12px; z-index: 1000;
+  background: var(--accent); color: #fff; padding: 5px 12px;
+  border-radius: 6px; font-size: 11px; font-weight: 600; pointer-events: none;
+  box-shadow: var(--shadow-md);
+}
+</style>
+</head>
+<body>
+<div class="mockup-banner">MOCKUP B · Things3 / Notion Calm</div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">P</div>
+      <div class="brand-name">PwTask</div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Inbox</div>
+      <div class="side-item">
+        <span class="ico">📥</span>
+        <span>All tasks</span>
+        <span class="count">22</span>
+      </div>
+      <div class="side-item">
+        <span class="ico">⏰</span>
+        <span>Today</span>
+        <span class="count">3</span>
+      </div>
+      <div class="side-item">
+        <span class="ico">⭐</span>
+        <span>Pending review</span>
+        <span class="count">5</span>
+      </div>
+    </div>
+
+    <div class="side-section">
+      <div class="side-label">Projects</div>
+      <div class="side-item active">
+        <span class="ico" style="color:#6366F1">●</span>
+        <span>Desktop App (Tauri)</span>
+        <span class="count">14</span>
+      </div>
+      <div class="side-item">
+        <span class="ico" style="color:#16A34A">●</span>
+        <span>NewsReport</span>
+        <span class="count">3</span>
+      </div>
+      <div class="side-item" style="color:var(--text-3)">
+        <span class="ico">＋</span>
+        <span>New project</span>
+      </div>
+    </div>
+
+    <div class="side-spacer"></div>
+
+    <div class="theme-toggle">
+      <span style="margin-right:auto">Theme</span>
+      <div class="theme-pill">
+        <button>Auto</button>
+        <button class="on">Light</button>
+        <button>Dark</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- TASK PANE (left half) -->
+  <section class="taskpane">
+    <div class="taskpane-header">
+      <div class="proj-emoji">🗂</div>
+      <h1 class="proj-title">Desktop App (Tauri)</h1>
+      <p class="proj-desc">แปลง AI Task Flow Dashboard เป็น Tauri desktop app พร้อม AI orchestration — Plan, Play, Review, Re-run with session resume</p>
+      <div class="proj-meta-row">
+        <span>📁 D:\DEV\PwTask</span>
+        <span>🎯 Production-ready desktop AI workflow</span>
+      </div>
+    </div>
+
+    <div class="taskpane-toolbar">
+      <div class="tab active">All <span class="badge">22</span></div>
+      <div class="tab">Active <span class="badge">8</span></div>
+      <div class="tab">Done <span class="badge">9</span></div>
+      <div class="tab">Blocked</div>
+      <span style="flex:1"></span>
+      <button class="btn-secondary" style="padding:5px 10px;font-size:12px">＋ New task</button>
+    </div>
+
+    <div class="tasks">
+      <div class="task-section-header">In Progress</div>
+
+      <div class="task-card">
+        <div class="task-checkbox in_progress"></div>
+        <div class="task-body">
+          <div class="task-title">Move Patch System to Rust + fix idempotency</div>
+          <div class="task-meta">
+            <span class="tag-chip high">High</span>
+            <span>👤 rust-dev</span>
+            <span>🤖 Opus</span>
+            <span>💬 6 subtasks</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-card selected">
+        <div class="task-checkbox in_progress"></div>
+        <div class="task-body">
+          <div class="task-title">Move Agent Routing to Rust</div>
+          <div class="task-meta">
+            <span class="tag-chip high">High</span>
+            <span>👤 rust-dev</span>
+            <span>🤖 Opus</span>
+            <span>30%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-section-header">Pending Review</div>
+
+      <div class="task-card">
+        <div class="task-checkbox review"></div>
+        <div class="task-body">
+          <div class="task-title">Move Domain Types + Tree Helpers to Rust</div>
+          <div class="task-meta">
+            <span class="tag-chip review">Review</span>
+            <span>👤 rust-dev</span>
+            <span>✅ 31 tests</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-checkbox review"></div>
+        <div class="task-body">
+          <div class="task-title">tauri-specta type-safe IPC bindings</div>
+          <div class="task-meta">
+            <span class="tag-chip review">Review</span>
+            <span>👤 rust-dev</span>
+            <span>📦 154 LOC bindings.ts</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-checkbox review"></div>
+        <div class="task-body">
+          <div class="task-title">JS logger + global error handlers</div>
+          <div class="task-meta">
+            <span class="tag-chip med">Med</span>
+            <span>👤 frontend-dev</span>
+            <span>📝 6 sites migrated</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-section-header">Todo</div>
+
+      <div class="task-card">
+        <div class="task-checkbox"></div>
+        <div class="task-body">
+          <div class="task-title">Move DB Layer to Rust + atomic write</div>
+          <div class="task-meta">
+            <span class="tag-chip high">High</span>
+            <span>👤 rust-dev</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-checkbox"></div>
+        <div class="task-body">
+          <div class="task-title">Code signing — Windows .pfx + macOS Developer ID</div>
+          <div class="task-meta">
+            <span class="tag-chip med">Med</span>
+            <span>👤 devops</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-section-header">Done</div>
+
+      <div class="task-card">
+        <div class="task-checkbox checked"></div>
+        <div class="task-body">
+          <div class="task-title done">Vite + TypeScript + ESLint setup</div>
+        </div>
+      </div>
+      <div class="task-card">
+        <div class="task-checkbox checked"></div>
+        <div class="task-body">
+          <div class="task-title done">Type definitions for domain + Tauri</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAIL (right half) -->
+  <section class="detail">
+    <div class="detail-breadcrumb">
+      <a href="#">Desktop App (Tauri)</a> / <a href="#">In Progress</a>
+    </div>
+
+    <input class="detail-title" value="Move Agent Routing to Rust">
+
+    <div class="detail-chips">
+      <div class="chip"><span class="chip-dot" style="background:var(--blue)"></span>In Progress</div>
+      <div class="chip" style="background:rgba(220,38,38,0.08);color:var(--red);border-color:rgba(220,38,38,0.2)">High Priority</div>
+      <div class="chip"><span class="chip-dot" style="background:#A78BFA"></span>rust-dev · Opus</div>
+      <div class="chip">📅 Due Friday</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-label">Description</div>
+      <div class="inline-edit-area" contenteditable="true">Port agent registry, routing logic, and execution dispatch from src/js/agents/* to src-tauri/src/agents/. Use once_cell::Lazy&lt;RwLock&lt;Vec&lt;Agent&gt;&gt;&gt; for in-memory state. Replace TS callers with commands.* IPC calls.
+
+After migration: registry.ts, routing.ts, legacy-mapping.ts deleted.</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-label">AI Run</div>
+      <div class="run-block">
+        <div class="run-row">
+          <button class="btn-primary">▶ Run with Opus</button>
+          <button class="btn-secondary">↻ Resume session</button>
+          <span style="flex:1"></span>
+          <span style="font-size:12px;color:var(--text-3)">Session: ses-a8f3</span>
+        </div>
+        <div class="terminal">
+<span class="info">[10:23:14]</span> Starting agent: rust-dev (claude-opus-4-7)
+<span class="info">[10:23:15]</span> Reading existing TS implementation...
+<span class="ok">[10:23:32]</span> ✓ Created src-tauri/src/agents/registry.rs (89 LOC)
+<span class="ok">[10:23:48]</span> ✓ Created src-tauri/src/agents/routing.rs (62 LOC)
+<span class="ok">[10:24:01]</span> ✓ Created src-tauri/src/agents/legacy.rs (24 LOC)
+<span class="warn">[10:24:14]</span> ! Updating main.rs collect_commands list
+<span class="info">[10:24:22]</span> Running cargo check...
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-label">Subtasks · 3 of 5 done</div>
+      <div class="subtask-row">
+        <div class="subtask-checkbox done"></div>
+        <div class="subtask-title" style="text-decoration:line-through;color:var(--text-3)">Define Agent struct in domain.rs</div>
+        <div class="subtask-meta">2h ago</div>
+      </div>
+      <div class="subtask-row">
+        <div class="subtask-checkbox done"></div>
+        <div class="subtask-title" style="text-decoration:line-through;color:var(--text-3)">Port DEFAULT_AGENTS list</div>
+        <div class="subtask-meta">1h ago</div>
+      </div>
+      <div class="subtask-row">
+        <div class="subtask-checkbox done"></div>
+        <div class="subtask-title" style="text-decoration:line-through;color:var(--text-3)">Implement resolve_agent_id with priority chain</div>
+        <div class="subtask-meta">30m ago</div>
+      </div>
+      <div class="subtask-row">
+        <div class="subtask-checkbox" style="border-color:var(--blue);background:radial-gradient(var(--blue) 25%, transparent 32%);border-style:dashed"></div>
+        <div class="subtask-title">Wire Tauri commands + register in specta</div>
+        <div class="subtask-meta">In progress</div>
+      </div>
+      <div class="subtask-row">
+        <div class="subtask-checkbox"></div>
+        <div class="subtask-title">Delete TS files + update callers</div>
+        <div class="subtask-meta">—</div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-label">Activity</div>
+      <div class="activity-log">
+        <div class="log-entry">
+          <span class="log-time">10:24</span>
+          <span class="agent-pill">Claude</span>
+          <span>Updated subtask "Implement resolve_agent_id" → done</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">10:23</span>
+          <span class="agent-pill">PM</span>
+          <span>Started in_progress with Opus sub-agent</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">09:45</span>
+          <span class="agent-pill">Wit</span>
+          <span>Approved 06-02 (domain types) → moved to 06-03</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

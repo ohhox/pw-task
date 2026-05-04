@@ -9,7 +9,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       reportsDirectory: 'coverage',
-      include: ['src/js/data.ts'],
+      include: ['src/js/data.ts', 'src/js/fileops.ts', 'src/js/agents/**'],
     },
   },
 });

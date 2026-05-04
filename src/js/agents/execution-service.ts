@@ -1,11 +1,19 @@
 // ─── AGENTS / EXECUTION SERVICE ──────────────────────────────────────────────
-// Owns: runTaskWithAgent and planProjectWithAgent — resolves agent+model, calls provider.
-// Does NOT: stream output or update UI — returns normalized {ok, output, sessionId, agentId, model}.
+// Owns: runTaskWithAgent and planProjectWithAgent — resolves agent+model via
+// the Rust IPC, then dispatches to the right provider implementation.
+// Does NOT: stream output or update UI — returns normalized
+// `{ ok, output, sessionId, agentId, model }`.
+//
+// Phase 1.6.3 moved registry + routing into Rust. Routing for `runTaskWithAgent`
+// now goes through `commands.agentResolve(task)` so the agent definition seen
+// here always matches the canonical registry. The sync TS cache in
+// `./index.ts` is reserved for render paths.
+
 import { claudeProviderRun } from './providers/claude.js';
 import { manualProviderRun } from './providers/manual.js';
-import { resolveAgentId, resolveModel } from './routing.js';
-import { getAgent } from './registry.js';
-import type { Task, Project, AgentProvider } from '../../types/domain';
+import { commands } from '../../bindings.js';
+import { getAgent } from './index.js';
+import type { Task, Project, AgentProvider, TokenUsage } from '../../types/domain';
 
 // ─── Provider contract ───────────────────────────────────────────────────
 // Shared between claudeProviderRun and manualProviderRun so type errors surface
@@ -28,6 +36,8 @@ export interface ProviderResult {
   sessionId?: string | null;
   error?: string;
   raw?: unknown;
+  /** Token usage + cost from Anthropic's result line; undefined when not available. */
+  usage?: TokenUsage | null;
 }
 
 export type ProviderFn = (args: ProviderRunArgs) => Promise<ProviderResult>;
@@ -61,18 +71,22 @@ export async function runTaskWithAgent({
   workingDir,
   runId,
 }: RunTaskInput): Promise<ExecutionResult> {
-  const agentId = resolveAgentId(task);
+  const resolved = await commands.agentResolve(task);
+  const { agentId, provider, model, systemPrompt } = resolved;
+
+  // The cached agent entry carries optional fields the IPC payload omits
+  // (allowedTools, skipPermissions). Looking it up in the cache keeps those
+  // working without bloating the IPC contract.
   const agentEntry = getAgent(agentId);
-  const model = resolveModel(task, agentEntry);
-  const providerFn = getProviderFn(agentEntry.provider);
+  const providerFn = getProviderFn(provider);
 
   if (!providerFn) {
     return {
       ok: false,
       agentId,
-      provider: agentEntry.provider,
+      provider,
       model,
-      error: `No adapter for provider '${agentEntry.provider}'`,
+      error: `No adapter for provider '${provider}'`,
     };
   }
 
@@ -82,11 +96,11 @@ export async function runTaskWithAgent({
     sessionId,
     workingDir,
     runId,
-    systemPrompt: agentEntry.systemPrompt || null,
+    systemPrompt: systemPrompt || agentEntry.systemPrompt || null,
     allowedTools: agentEntry.allowedTools ?? null,
     skipPermissions: agentEntry.skipPermissions ?? false,
   });
-  return { ...result, agentId, provider: agentEntry.provider, model };
+  return { ...result, agentId, provider, model };
 }
 
 interface PlanProjectInput {

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PwTask UI Mockups</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; background: #0d0d1b; color: #f0f0ff; padding: 60px 40px; line-height: 1.6; }
+h1 { font-size: 32px; font-weight: 700; margin-bottom: 12px; }
+.subtitle { color: #9898bc; margin-bottom: 40px; font-size: 16px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1100px; }
+.card {
+  background: #181830; border: 1px solid #2e2e54; border-radius: 12px;
+  padding: 24px; text-decoration: none; color: inherit;
+  transition: all 0.2s; display: block;
+}
+.card:hover { border-color: #7c73ff; transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,0.4); }
+.tag {
+  display: inline-block; padding: 3px 10px; background: rgba(124,115,255,0.15);
+  color: #7c73ff; border-radius: 99px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 14px;
+}
+.card h2 { font-size: 20px; margin-bottom: 8px; }
+.card p { color: #c2c2de; font-size: 14px; margin-bottom: 14px; }
+.feat { font-size: 12px; color: #9898bc; margin-top: 8px; }
+.feat li { margin: 3px 0 3px 16px; }
+.recommend { color: #4ade80; font-weight: 600; font-size: 12px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<h1>PwTask UI Redesign — Mockups</h1>
+<p class="subtitle">3 directions to compare. Click each to view in browser. <em>Static HTML, fake data — for design discussion.</em></p>
+
+<div class="grid">
+  <a class="card" href="a-linear.html">
+    <div class="tag">Direction A</div>
+    <h2>Linear-inspired</h2>
+    <p>Power user · Density · Keyboard-first</p>
+    <ul class="feat">
+      <li>Compact 32px task rows with status dots</li>
+      <li>Lucide SVG icons (consistent stroke)</li>
+      <li>Command palette (Ctrl+K) — try it!</li>
+      <li>Status bar at bottom</li>
+      <li>Mono ID prefix (PWT-014)</li>
+    </ul>
+    <div class="recommend">★ Recommended for AI dev tool DNA</div>
+  </a>
+
+  <a class="card" href="b-things3.html">
+    <div class="tag">Direction B</div>
+    <h2>Things3 / Notion Calm</h2>
+    <p>Calm · Spacious · Inline editing · Light mode default</p>
+    <ul class="feat">
+      <li>Side-by-side detail (split view)</li>
+      <li>Larger type (15px base)</li>
+      <li>Inline editable description (no modal)</li>
+      <li>Soft palette + theme toggle</li>
+      <li>Activity log integrated in detail</li>
+    </ul>
+  </a>
+
+  <a class="card" href="c-multiview.html">
+    <div class="tag">Direction C</div>
+    <h2>Multi-view (Asana/ClickUp)</h2>
+    <p>Power · Multi-perspective · Kanban + Timeline + Calendar</p>
+    <ul class="feat">
+      <li>Tab toggle: List / Board / Timeline / Calendar</li>
+      <li>Kanban view with drag-to-reorder feel</li>
+      <li>Saved views per project</li>
+      <li>Asana-style chrome (cleaner blue)</li>
+      <li>Bigger scope — 7-10 days work</li>
+    </ul>
+  </a>
+
+  <a class="card" href="components-preview.html" style="border-color:#4ade80">
+    <div class="tag" style="background:rgba(74,222,128,0.15);color:#4ade80">Components · LIVE</div>
+    <h2>Component Primitives Preview</h2>
+    <p>Phase A · ของจริงในโค้ด · Button / Chip / Avatar / Skeleton / Empty</p>
+    <ul class="feat">
+      <li>Source: src/views/components/*.ts</li>
+      <li>CSS appended to src/styles.css (additive only)</li>
+      <li>Lucide icon library: src/views/icons.ts (60+ icons)</li>
+      <li>Sample tutorial data: outputs/sample-data/welcome-tutorial.json</li>
+    </ul>
+    <div class="recommend" style="color:#4ade80">★ พร้อม integrate เข้า render.ts ตอน Phase B</div>
+  </a>
+
+  <a class="card" href="d-mission-control.html" style="border-color:#FFAA00;background:linear-gradient(180deg,#181830,#13181f)">
+    <div class="tag" style="background:rgba(255,170,0,0.15);color:#FFAA00">Direction D · NEW</div>
+    <h2>Mission Control</h2>
+    <p>Cassette futurism · Cockpit · Stencil headers · Phosphor signal lamps</p>
+    <ul class="feat">
+      <li>Big Shoulders Stencil + JetBrains Mono (no Inter)</li>
+      <li>Cream foreground on near-black ink, amber/phosphor signal accents</li>
+      <li>Tasks as "objectives" with cockpit indicator lamps</li>
+      <li>HUD strip top + telemetry footer</li>
+      <li>Animated scan-line sweep + boot stagger reveal</li>
+      <li>Subtle grain + grid overlay — looks like real hardware</li>
+    </ul>
+    <div class="recommend" style="color:#FFAA00">★ Bold + distinctive — not generic AI dashboard</div>
+  </a>
+</div>
+</body>
+</html>

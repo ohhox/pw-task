@@ -11,9 +11,8 @@ import {
 } from './data.js';
 import {
   getEnabledAgents, getAllAgents, getAgent, agentAdd, agentUpdate, agentRemove,
-  DEFAULT_AGENT_IDS,
-} from './agents/registry.js';
-import { legacyToAgentId } from './agents/legacy-mapping.js';
+  DEFAULT_AGENT_IDS, legacyToAgentId,
+} from './agents/index.js';
 import { scheduleSave } from './fileops.js';
 import { renderSidebar, renderProject, renderTaskList, refreshAgentFilter } from './render.js';
 import { renderDetail } from './detail.js';
@@ -497,10 +496,11 @@ export function showAgentManagerModal(): void {
       const action = el.dataset.action;
       if (action === 'toggle') {
         el.addEventListener('change', () => {
-          agentUpdate(id, { enabled: (el as HTMLInputElement).checked });
-          scheduleSave();
-          refreshAgentFilter();
-          rerender();
+          // CRUD now goes through Rust IPC. Fire-and-forget but surface
+          // failures so the toggle never silently desyncs from disk.
+          agentUpdate(id, { enabled: (el as HTMLInputElement).checked })
+            .then(() => { scheduleSave(); refreshAgentFilter(); rerender(); })
+            .catch((e: unknown) => toast('❌ ' + (e instanceof Error ? e.message : String(e))));
         });
       } else if (action === 'edit') {
         el.addEventListener('click', () =>
@@ -508,11 +508,14 @@ export function showAgentManagerModal(): void {
         );
       } else if (action === 'delete') {
         el.addEventListener('click', () => {
-          agentRemove(id);
-          scheduleSave();
-          refreshAgentFilter();
-          rerender();
-          toast('🗑 Agent removed');
+          agentRemove(id)
+            .then(() => {
+              scheduleSave();
+              refreshAgentFilter();
+              rerender();
+              toast('🗑 Agent removed');
+            })
+            .catch((e: unknown) => toast('❌ ' + (e instanceof Error ? e.message : String(e))));
         });
       }
     });
@@ -564,6 +567,9 @@ export function showAgentEditModal(agentId: string | null, onSaved: () => void):
       const systemPrompt = qTextarea(ov, '#ae-sysprompt').value;
       const defaultModel = qSelect(ov, '#ae-model').value || null;
 
+      // CRUD is now async (Rust round-trip). The showModal contract still
+      // expects a sync confirm callback, so we fire-and-forget here and
+      // surface any error via toast — the modal closes optimistically.
       if (isNew) {
         const id = qInput(ov, '#ae-id').value.trim().replace(/\s+/g, '-').toLowerCase();
         if (!id) { toast('ID is required'); return false; }
@@ -576,15 +582,22 @@ export function showAgentEditModal(agentId: string | null, onSaved: () => void):
           capabilities: [],
           enabled: true,
           systemPrompt,
-        });
+        })
+          .then(() => onSaved())
+          .catch((e: unknown) => toast('❌ ' + (e instanceof Error ? e.message : String(e))));
       } else {
         const patch: Partial<Agent> = { label, systemPrompt, defaultModel };
         if (agentId !== null && !DEFAULT_AGENT_IDS.has(agentId)) {
           patch.provider = qSelect(ov, '#ae-provider').value as AgentProvider;
         }
-        if (agentId !== null) agentUpdate(agentId, patch);
+        if (agentId !== null) {
+          agentUpdate(agentId, patch)
+            .then(() => onSaved())
+            .catch((e: unknown) => toast('❌ ' + (e instanceof Error ? e.message : String(e))));
+        } else {
+          onSaved();
+        }
       }
-      onSaved();
     },
     isNew ? 'Add' : 'Save'
   );

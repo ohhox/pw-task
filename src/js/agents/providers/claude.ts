@@ -38,7 +38,8 @@ export async function claudeProviderRun({
     const r = raw as RunResult;
     const output = (typeof r === 'object' ? r.output : r) || '';
     const sid = (typeof r === 'object' ? r.sessionId : null) || null;
-    return { ok: true, output, sessionId: sid, raw: r };
+    const usage = (typeof r === 'object' ? r.usage : null) ?? null;
+    return { ok: true, output, sessionId: sid, usage, raw: r };
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return { ok: false, error: msg, raw: e };

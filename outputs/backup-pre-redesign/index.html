@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Task Flow</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <header id="header">
+    <div id="header-logo"><span>🗂</span> AI Task Flow</div>
+    <div id="header-spacer"></div>
+    <span id="save-status"></span>
+    <button class="header-btn archive-btn" id="btn-archive" style="display:none">📦 Archive</button>
+    <button class="header-btn" id="btn-sync" style="display:none" title="Check for new patches">🔄 Sync</button>
+    <button class="header-btn" id="btn-font-size" title="Font size">A</button>
+    <button class="header-btn" id="btn-agent-mgr" title="Manage Agents">⚙ Agents</button>
+    <button class="header-btn" id="btn-open" title="Change project folder">📂 Change Folder</button>
+    <button class="header-btn primary" id="btn-save" style="display:none">💾 Save</button>
+  </header>
+  <div id="body">
+    <nav id="sidebar">
+      <div id="sidebar-projects">
+        <div class="sidebar-section-title">Projects</div>
+        <div id="project-list"></div>
+        <button class="sidebar-add-btn" id="btn-add-project">＋ New Project</button>
+      </div>
+      <div id="sidebar-summary">
+        <div class="summary-title">Summary</div>
+        <div id="summary-rows"></div>
+      </div>
+    </nav>
+    <main id="main">
+      <div id="welcome">
+        <div class="welcome-icon">🗂</div>
+        <div class="welcome-title">AI Task Flow</div>
+        <div id="welcome-msg" class="welcome-desc" style="min-height:40px"></div>
+        <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:8px 14px;max-width:90%;overflow:hidden">
+          <span style="font-size:13px;color:var(--text-muted);white-space:nowrap">📁</span>
+          <span id="current-dir-display" style="font-size:12px;color:var(--text-dim);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1"></span>
+          <button class="welcome-btn-secondary" id="btn-open-welcome" style="white-space:nowrap;flex-shrink:0">Change…</button>
+        </div>
+      </div>
+      <div id="project-view" style="display:none; flex:1; flex-direction:column; overflow:hidden;">
+        <div id="project-header">
+          <div id="project-title-wrap">
+            <div id="project-dot-big"></div>
+            <div>
+              <div id="project-title-text"></div>
+              <div id="project-desc-text"></div>
+              <div id="project-goal-text"></div>
+              <div id="project-workdir-text"></div>
+              <div id="project-id-text"></div>
+            </div>
+          </div>
+          <button class="proj-action-btn run-btn" id="btn-run-project" style="display:none" title="Run project command in new terminal">▶ Run</button>
+          <button class="proj-action-btn" id="btn-vscode" style="display:none" title="Open working directory in VS Code">💻 VS Code</button>
+          <button class="plan-btn" id="btn-plan-project" title="Plan project tasks with AI">✨ Plan</button>
+          <button class="proj-action-btn" id="btn-edit-project">✏️ Edit</button>
+          <button class="proj-action-btn" id="btn-export-claude" title="Generate CLAUDE.md for this project">📋 CLAUDE.md</button>
+          <button class="proj-action-btn danger" id="btn-delete-project">🗑 Delete</button>
+        </div>
+        <div id="filters-bar">
+          <input class="filter-input" id="search-input" placeholder="🔍 Search tasks…" type="text">
+          <select class="filter-select" id="filter-status">
+            <option value="">All Status</option>
+            <option value="todo">Todo</option>
+            <option value="in_progress">In Progress</option>
+            <option value="pending_review">Pending Review</option>
+            <option value="done">Done</option>
+            <option value="blocked">Blocked</option>
+          </select>
+          <select class="filter-select" id="filter-agent">
+            <option value="">All Agents</option>
+          </select>
+          <select class="filter-select" id="filter-priority">
+            <option value="">All Priority</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <button class="clear-btn" id="btn-clear-filters">✕ Clear</button>
+        </div>
+        <div id="content-area" style="display:flex; flex:1; overflow:hidden; min-height:0;">
+          <div id="task-list-view" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+            <div id="task-list-wrap">
+              <button class="new-task-btn" id="btn-add-task">＋ New Task</button>
+              <div id="task-list"></div>
+            </div>
+          </div>
+          <div id="detail-panel" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+            <div id="detail-header">
+              <button class="ws-back-btn" id="detail-close">← All Tasks</button>
+              <span id="ws-proj-name" class="ws-proj-name"></span>
+              <span id="detail-title-text" style="display:none"></span>
+            </div>
+            <div id="detail-body"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<div id="toast"></div>
+
+<!-- marked: Markdown renderer (~25KB gzipped) — loaded from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+<!-- ES Modules: dependency graph resolved via import statements; load order auto-managed -->
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

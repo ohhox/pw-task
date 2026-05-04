@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PwTask Mockup A — Linear-inspired</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #08090A;
+  --surface: #101113;
+  --surface2: #18191B;
+  --surface3: #222326;
+  --border: #23252A;
+  --border-strong: #2D3036;
+  --text: #E6E8EB;
+  --text-2: #9CA0AC;
+  --text-3: #5E6271;
+  --accent: #5E6AD2;
+  --accent-soft: rgba(94,106,210,0.12);
+  --green: #4CB782;
+  --orange: #E9A23B;
+  --red: #EB5757;
+  --blue: #4EA7FC;
+  --yellow: #F2C94C;
+  --gray: #6B7080;
+  --radius: 6px;
+  --kbd-bg: rgba(255,255,255,0.06);
+}
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 13px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+/* ===== APP SHELL ===== */
+.app { display: flex; flex-direction: column; height: 100vh; }
+.topbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px; height: 40px;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.topbar-logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; }
+.logo-mark {
+  width: 18px; height: 18px; border-radius: 4px;
+  background: linear-gradient(135deg, var(--accent), #8E97E8);
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-mark svg { width: 10px; height: 10px; color: #fff; }
+.topbar-spacer { flex: 1; }
+
+.cmdk-trigger {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 8px 4px 10px; min-width: 220px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); color: var(--text-3); font-size: 12px; cursor: pointer;
+  transition: border-color 0.1s;
+}
+.cmdk-trigger:hover { border-color: var(--border-strong); }
+.cmdk-trigger svg { width: 12px; height: 12px; }
+.cmdk-spacer { flex: 1; }
+.kbd {
+  display: inline-flex; align-items: center; padding: 1px 5px;
+  background: var(--kbd-bg); border: 1px solid var(--border);
+  border-radius: 3px; font-size: 10px; color: var(--text-2);
+  font-family: ui-monospace, 'SF Mono', monospace;
+}
+
+.icon-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border: none; background: transparent;
+  color: var(--text-2); cursor: pointer; border-radius: 4px;
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); }
+.icon-btn svg { width: 14px; height: 14px; }
+
+/* ===== BODY ===== */
+.body { display: flex; flex: 1; overflow: hidden; }
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--bg); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 8px 6px;
+}
+.side-section { padding: 6px 0; }
+.side-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--text-3); text-transform: uppercase;
+  padding: 6px 8px;
+}
+.side-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; border-radius: 4px;
+  font-size: 13px; color: var(--text-2); cursor: pointer;
+}
+.side-item:hover { background: var(--surface2); color: var(--text); }
+.side-item.active { background: var(--surface2); color: var(--text); }
+.side-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+.side-item .count { margin-left: auto; font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+.sidebar-footer { margin-top: auto; padding: 8px; border-top: 1px solid var(--border); }
+.user-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 6px; border-radius: 4px; cursor: pointer;
+}
+.user-pill:hover { background: var(--surface2); }
+.avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #FB7185, #F472B6); }
+
+/* ===== MAIN ===== */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.proj-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 24px; border-bottom: 1px solid var(--border);
+}
+.proj-title { font-size: 15px; font-weight: 600; }
+.proj-meta { font-size: 12px; color: var(--text-3); display: flex; gap: 8px; align-items: center; }
+.proj-meta-divider { width: 1px; height: 12px; background: var(--border); }
+.proj-actions { margin-left: auto; display: flex; gap: 4px; }
+
+.toolbar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 24px; border-bottom: 1px solid var(--border);
+}
+.filter-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px 3px 8px; border-radius: 99px;
+  background: var(--surface2); border: 1px solid var(--border);
+  font-size: 11px; color: var(--text-2); cursor: pointer; height: 24px;
+}
+.filter-chip:hover { background: var(--surface3); color: var(--text); }
+.filter-chip svg { width: 11px; height: 11px; }
+
+/* ===== TASK TABLE ===== */
+.task-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+.task-row {
+  display: grid;
+  grid-template-columns: 24px 80px 1fr 80px 100px 80px 90px 24px;
+  align-items: center; gap: 12px;
+  padding: 0 24px; height: 32px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.08s;
+}
+.task-row:hover { background: var(--surface); }
+.task-row.selected { background: var(--accent-soft); }
+.task-row.indented { padding-left: 60px; grid-template-columns: 24px 80px 1fr 80px 100px 80px 90px 24px; }
+.task-row.indented::before { content: ''; position: absolute; left: 36px; width: 12px; height: 1px; background: var(--border); }
+
+.t-status { display: flex; align-items: center; }
+.status-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid; background: transparent; }
+.status-dot.todo { border-color: var(--gray); }
+.status-dot.in_progress { border-color: var(--yellow); border-style: dashed; animation: spin 4s linear infinite; }
+.status-dot.review { border-color: var(--orange); background: radial-gradient(var(--orange) 30%, transparent 35%); }
+.status-dot.done { border-color: var(--green); background: var(--green); }
+.status-dot.blocked { border-color: var(--red); background: radial-gradient(var(--red) 30%, transparent 35%); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.t-id { font-family: ui-monospace, 'SF Mono', monospace; font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.t-title { color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-priority { display: flex; gap: 2px; align-items: center; font-size: 11px; color: var(--text-2); }
+.priority-bar { width: 3px; height: 8px; background: var(--border); border-radius: 1px; }
+.priority-bar.on.high { background: var(--red); }
+.priority-bar.on.med { background: var(--yellow); }
+.priority-bar.on.low { background: var(--gray); }
+.t-agent {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 1px 7px; border-radius: 3px;
+  background: var(--surface2); font-size: 11px; color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.t-agent .agent-dot { width: 5px; height: 5px; border-radius: 50%; }
+.t-agent .agent-dot.opus { background: #A78BFA; }
+.t-agent .agent-dot.sonnet { background: var(--blue); }
+.t-agent .agent-dot.haiku { background: var(--green); }
+.t-date { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.t-progress { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.t-progress-bar { flex: 1; height: 3px; background: var(--border); border-radius: 1px; overflow: hidden; }
+.t-progress-fill { height: 100%; background: var(--green); }
+.t-action { display: flex; justify-content: center; opacity: 0; transition: opacity 0.1s; }
+.task-row:hover .t-action { opacity: 1; }
+.play-mini {
+  width: 20px; height: 20px; border-radius: 4px; border: none;
+  background: var(--surface2); color: var(--green); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.play-mini:hover { background: var(--green); color: #fff; }
+.play-mini svg { width: 10px; height: 10px; }
+
+.task-group-header {
+  padding: 16px 24px 6px; font-size: 11px; font-weight: 600;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg);
+}
+.task-group-header .count { color: var(--text-3); font-weight: 400; }
+
+/* ===== COMMAND PALETTE PREVIEW ===== */
+.cmdk-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 96px; z-index: 999; pointer-events: none; opacity: 0;
+}
+.cmdk-overlay.show { opacity: 1; pointer-events: auto; }
+.cmdk-modal {
+  width: 560px; max-width: calc(100vw - 32px);
+  background: var(--surface); border: 1px solid var(--border-strong);
+  border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  overflow: hidden;
+}
+.cmdk-input {
+  width: 100%; padding: 14px 16px; background: transparent;
+  border: none; outline: none; color: var(--text); font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.cmdk-section-label {
+  padding: 8px 16px 4px; font-size: 10px;
+  color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.cmdk-result {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 16px; cursor: pointer; font-size: 13px;
+}
+.cmdk-result.active { background: var(--accent-soft); }
+.cmdk-result svg { width: 14px; height: 14px; color: var(--text-2); }
+.cmdk-result-shortcut { margin-left: auto; display: flex; gap: 3px; }
+
+/* ===== STATUS BAR (footer) ===== */
+.statusbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 12px; height: 22px;
+  background: var(--surface); border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-3);
+}
+.sb-item { display: flex; align-items: center; gap: 5px; }
+.sb-item svg { width: 11px; height: 11px; }
+.sb-spacer { flex: 1; }
+
+/* Mockup banner */
+.mockup-banner {
+  position: fixed; top: 8px; right: 8px; z-index: 1000;
+  background: var(--accent); color: #fff; padding: 4px 10px;
+  border-radius: 4px; font-size: 11px; font-weight: 600; pointer-events: none;
+}
+</style>
+</head>
+<body>
+<div class="mockup-banner">MOCKUP A · Linear-inspired</div>
+
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <span class="logo-mark"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z"/></svg></span>
+      PwTask
+    </div>
+
+    <div class="cmdk-trigger" onclick="document.getElementById('cmdk').classList.add('show')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Search or run a command…</span>
+      <span class="cmdk-spacer"></span>
+      <span class="kbd">⌘K</span>
+    </div>
+
+    <span class="topbar-spacer"></span>
+
+    <button class="icon-btn" title="Sync"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+    <button class="icon-btn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </div>
+
+  <div class="body">
+    <!-- SIDEBAR -->
+    <nav class="sidebar">
+      <div class="side-section">
+        <div class="side-label">Projects</div>
+        <div class="side-item active">
+          <span class="dot" style="background:#5E6AD2"></span>
+          <span>Desktop App (Tauri)</span>
+          <span class="count">14</span>
+        </div>
+        <div class="side-item">
+          <span class="dot" style="background:#4CB782"></span>
+          <span>NewsReport</span>
+          <span class="count">3</span>
+        </div>
+        <div class="side-item" style="color:var(--text-3)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>New project</span>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <div class="side-label">Views</div>
+        <div class="side-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          All issues
+          <span class="count">22</span>
+        </div>
+        <div class="side-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          In progress
+          <span class="count">3</span>
+        </div>
+        <div class="side-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11H1l8-8 8 8h-8v10z" transform="rotate(180 12 12)"/></svg>
+          Review pending
+          <span class="count">5</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="avatar"></div>
+          <span style="font-size:12px">Wit</span>
+          <span class="kbd" style="margin-left:auto">?</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="proj-header">
+        <span class="dot" style="width:10px;height:10px;background:#5E6AD2"></span>
+        <span class="proj-title">Desktop App (Tauri)</span>
+        <div class="proj-meta">
+          <span>D:\DEV\PwTask</span>
+          <span class="proj-meta-divider"></span>
+          <span>14 tasks · 9 done</span>
+        </div>
+        <div class="proj-actions">
+          <button class="icon-btn" title="Run project"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+          <button class="icon-btn" title="VS Code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></button>
+          <button class="icon-btn" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="filter-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Status · Active
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="filter-chip">
+          Priority · All
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="filter-chip">
+          Agent · All
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <span style="flex:1"></span>
+        <span style="font-size:11px;color:var(--text-3)">Group by <strong style="color:var(--text-2)">Status</strong></span>
+        <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+      </div>
+
+      <div class="task-list">
+        <div class="task-group-header">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          In Progress <span class="count">3</span>
+        </div>
+
+        <div class="task-row">
+          <div class="t-status"><span class="status-dot in_progress"></span></div>
+          <div class="t-id">PWT-014</div>
+          <div class="t-title">Move Patch System to Rust + fix idempotency</div>
+          <div class="t-priority"><span class="priority-bar on high"></span><span class="priority-bar on high"></span><span class="priority-bar on high"></span><span>High</span></div>
+          <div class="t-agent"><span class="agent-dot opus"></span>rust-dev</div>
+          <div class="t-date">2h ago</div>
+          <div class="t-progress"><span>60%</span><div class="t-progress-bar"><div class="t-progress-fill" style="width:60%"></div></div></div>
+          <div class="t-action"><button class="play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></div>
+        </div>
+
+        <div class="task-row selected">
+          <div class="t-status"><span class="status-dot in_progress"></span></div>
+          <div class="t-id">PWT-013</div>
+          <div class="t-title">Move Agent Routing to Rust</div>
+          <div class="t-priority"><span class="priority-bar on high"></span><span class="priority-bar on high"></span><span class="priority-bar"></span><span>High</span></div>
+          <div class="t-agent"><span class="agent-dot opus"></span>rust-dev</div>
+          <div class="t-date">15m ago</div>
+          <div class="t-progress"><span>30%</span><div class="t-progress-bar"><div class="t-progress-fill" style="width:30%"></div></div></div>
+          <div class="t-action"><button class="play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></div>
+        </div>
+
+        <div class="task-row">
+          <div class="t-status"><span class="status-dot in_progress"></span></div>
+          <div class="t-id">PWT-021</div>
+          <div class="t-title">UI Redesign — Phase 2</div>
+          <div class="t-priority"><span class="priority-bar on med"></span><span class="priority-bar on med"></span><span class="priority-bar"></span><span>Med</span></div>
+          <div class="t-agent"><span class="agent-dot sonnet"></span>frontend-dev</div>
+          <div class="t-date">just now</div>
+          <div class="t-progress"><span>5%</span><div class="t-progress-bar"><div class="t-progress-fill" style="width:5%"></div></div></div>
+          <div class="t-action"><button class="play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></div>
+        </div>
+
+        <div class="task-group-header" style="margin-top:8px">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          Pending Review <span class="count">5</span>
+        </div>
+
+        <div class="task-row">
+          <div class="t-status"><span class="status-dot review"></span></div>
+          <div class="t-id">PWT-012</div>
+          <div class="t-title">Move Domain Types + Tree Helpers to Rust</div>
+          <div class="t-priority"><span class="priority-bar on high"></span><span class="priority-bar on high"></span><span class="priority-bar on high"></span><span>High</span></div>
+          <div class="t-agent"><span class="agent-dot opus"></span>rust-dev</div>
+          <div class="t-date">30m ago</div>
+          <div class="t-progress"><span>100%</span><div class="t-progress-bar"><div class="t-progress-fill" style="width:100%"></div></div></div>
+          <div class="t-action"><button class="play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></div>
+        </div>
+
+        <div class="task-row">
+          <div class="t-status"><span class="status-dot review"></span></div>
+          <div class="t-id">PWT-011</div>
+          <div class="t-title">tauri-specta type-safe IPC bindings</div>
+          <div class="t-priority"><span class="priority-bar on high"></span><span class="priority-bar on high"></span><span class="priority-bar on high"></span><span>High</span></div>
+          <div class="t-agent"><span class="agent-dot sonnet"></span>rust-dev</div>
+          <div class="t-date">1h ago</div>
+          <div class="t-progress"><span>100%</span><div class="t-progress-bar"><div class="t-progress-fill" style="width:100%"></div></div></div>
+          <div class="t-action"><button class="play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></div>
+        </div>
+
+        <div class="task-row">
+          <div class="t-status"><span class="status-dot review"></span></div>
+          <div class="t-id">PWT-010</div>
+          <div class="t-title">JS logger + global error handlers</div>
+          <div class="t-priority"><span class="priority-bar on med"></span><span class="priority-bar on med"></span><span class="priority-bar"></span><span>Med</span></div>
+          <div class="t-agent"><span class="agent-dot sonnet"></span>frontend-dev</div>
+          <div class="t-date">1h ago</div>
+          <div class="t-progress"><span>100%</span><div class="t-progress-bar"><div class="t-progress-fill" style="width:100%"></div></div></div>
+          <div class="t-action"><button class="play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></div>
+        </div>
+
+        <div class="task-group-header" style="margin-top:8px">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          Todo <span class="count">6</span>
+        </div>
+
+        <div class="task-row">
+          <div class="t-status"><span class="status-dot todo"></span></div>
+          <div class="t-id">PWT-015</div>
+          <div class="t-title">Move DB Layer to Rust + atomic write</div>
+          <div class="t-priority"><span class="priority-bar on high"></span><span class="priority-bar on high"></span><span class="priority-bar on high"></span><span>High</span></div>
+          <div class="t-agent"><span class="agent-dot opus"></span>rust-dev</div>
+          <div class="t-date">—</div>
+          <div class="t-progress"></div>
+          <div class="t-action"><button class="play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></div>
+        </div>
+
+        <div class="task-row">
+          <div class="t-status"><span class="status-dot todo"></span></div>
+          <div class="t-id">PWT-016</div>
+          <div class="t-title">Code signing — Windows .pfx + macOS Developer ID</div>
+          <div class="t-priority"><span class="priority-bar on med"></span><span class="priority-bar on med"></span><span class="priority-bar"></span><span>Med</span></div>
+          <div class="t-agent"><span class="agent-dot sonnet"></span>devops</div>
+          <div class="t-date">—</div>
+          <div class="t-progress"></div>
+          <div class="t-action"><button class="play-mini"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <span class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      Saved
+    </span>
+    <span class="sb-item">22 tasks · 9 done · 3 in progress</span>
+    <span class="sb-spacer"></span>
+    <span class="sb-item">All tests passing · 207 tests</span>
+    <span class="sb-item">v0.1.0</span>
+  </div>
+</div>
+
+<!-- COMMAND PALETTE -->
+<div class="cmdk-overlay" id="cmdk" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="cmdk-modal">
+    <input class="cmdk-input" placeholder="Search tasks, run commands, jump to project…" autofocus>
+    <div class="cmdk-section-label">Suggestions</div>
+    <div class="cmdk-result active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Run task PWT-013 — Move Agent Routing to Rust
+      <div class="cmdk-result-shortcut"><span class="kbd">⏎</span></div>
+    </div>
+    <div class="cmdk-result">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New task in current project
+      <div class="cmdk-result-shortcut"><span class="kbd">N</span></div>
+    </div>
+    <div class="cmdk-result">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Search across all projects…
+    </div>
+    <div class="cmdk-section-label">Recent</div>
+    <div class="cmdk-result">
+      <span class="status-dot review" style="width:10px;height:10px"></span>
+      PWT-012 · Move Domain Types to Rust
+    </div>
+    <div class="cmdk-result">
+      <span class="status-dot in_progress" style="width:10px;height:10px"></span>
+      PWT-014 · Move Patch System to Rust
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); document.getElementById('cmdk').classList.add('show'); }
+  if (e.key === 'Escape') document.getElementById('cmdk').classList.remove('show');
+});
+</script>
+</body>
+</html>
