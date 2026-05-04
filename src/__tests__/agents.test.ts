@@ -54,10 +54,14 @@ vi.mock('../bindings.js', () => ({
 
 // Provider mocks — execution-service.ts imports these via './providers/*.js'.
 const claudeProviderRunMock = vi.fn();
+const cliProviderRunMock = vi.fn();
 const manualProviderRunMock = vi.fn();
 
 vi.mock('../js/agents/providers/claude.js', () => ({
   claudeProviderRun: (...args: unknown[]) => claudeProviderRunMock(...args),
+}));
+vi.mock('../js/agents/providers/cli.js', () => ({
+  cliProviderRun: (...args: unknown[]) => cliProviderRunMock(...args),
 }));
 vi.mock('../js/agents/providers/manual.js', () => ({
   manualProviderRun: (...args: unknown[]) => manualProviderRunMock(...args),
@@ -112,12 +116,15 @@ function makeAgent(overrides: Partial<Agent> & { id: string }): Agent {
     systemPrompt: overrides.systemPrompt ?? '',
     allowedTools: overrides.allowedTools,
     skipPermissions: overrides.skipPermissions,
+    cliCommand: overrides.cliCommand,
+    cliArgs: overrides.cliArgs,
   };
 }
 
 beforeEach(() => {
   _resetAgentsForTest();
   claudeProviderRunMock.mockReset();
+  cliProviderRunMock.mockReset();
   manualProviderRunMock.mockReset();
   agentResolveMock.mockReset();
   agentAddMock.mockClear();
@@ -135,6 +142,11 @@ beforeEach(() => {
     ok: false,
     error: 'Manual tasks cannot be auto-run',
     raw: null,
+  });
+  cliProviderRunMock.mockResolvedValue({
+    ok: true,
+    output: 'hello from cli',
+    sessionId: null,
   });
   // Default IPC responses — make agentResolve mirror the sync cache so most
   // tests don't have to program it explicitly.
@@ -209,6 +221,31 @@ describe('runTaskWithAgent()', () => {
     expect(claudeProviderRunMock).not.toHaveBeenCalled();
   });
 
+  it('cli provider: dispatches to generic CLI adapter with command template', async () => {
+    await agentAdd(
+      makeAgent({
+        id: 'gemini-custom',
+        provider: 'cli',
+        defaultModel: 'gemini',
+        cliCommand: 'omx',
+        cliArgs: ['gemini', '{prompt}'],
+      })
+    );
+
+    const res = await runTaskWithAgent({
+      task: makeTask({ agentId: 'gemini-custom' }),
+      prompt: 'use gemini',
+      runId: 'run-cli-1',
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.provider).toBe('cli');
+    expect(cliProviderRunMock).toHaveBeenCalledTimes(1);
+    const call = cliProviderRunMock.mock.calls[0][0];
+    expect(call.cliCommand).toBe('omx');
+    expect(call.cliArgs).toEqual(['gemini', '{prompt}']);
+  });
+
   it('unknown provider: returns descriptive error and does not invoke any provider', async () => {
     // Override the IPC mock to claim the resolved agent uses an unsupported
     // provider — same shape Rust would return if a custom agent had been
@@ -232,6 +269,7 @@ describe('runTaskWithAgent()', () => {
     expect(res.agentId).toBe('weird');
     expect(res.provider).toBe('gemini');
     expect(claudeProviderRunMock).not.toHaveBeenCalled();
+    expect(cliProviderRunMock).not.toHaveBeenCalled();
     expect(manualProviderRunMock).not.toHaveBeenCalled();
   });
 
@@ -438,7 +476,7 @@ describe('TS cache facade', () => {
 
 // ─── loadAgentsFromDb ────────────────────────────────────────────────────
 describe('loadAgentsFromDb()', () => {
-  it('replaces the cache with the saved agents and pushes to Rust', () => {
+  it('loads saved agents, backfills built-in defaults, and pushes to Rust', () => {
     const saved: Agent[] = [
       makeAgent({ id: 'a1', label: 'Saved-1' }),
       makeAgent({ id: 'a2', label: 'Saved-2', systemPrompt: 'sp' }),
@@ -447,9 +485,10 @@ describe('loadAgentsFromDb()', () => {
     loadAgentsFromDb(saved);
     const all = getAllAgents();
 
-    expect(all.length).toBe(2);
-    expect(all.map((a) => a.id)).toEqual(['a1', 'a2']);
-    expect(all[1].systemPrompt).toBe('sp');
+    expect(all.slice(0, 2).map((a) => a.id)).toEqual(['a1', 'a2']);
+    expect(getAgent('a2').systemPrompt).toBe('sp');
+    expect(getAgent('gemini').provider).toBe('cli');
+    expect(getAgent('gemini').cliCommand).toBe('omx');
     expect(agentReplaceAllMock).toHaveBeenCalledTimes(1);
   });
 
@@ -475,9 +514,22 @@ describe('loadAgentsFromDb()', () => {
 
     loadAgentsFromDb([]);
     expect(getAllAgents().length).toBe(defaultsLen);
-    for (const id of ['planner', 'executor', 'reviewer', 'quickfix', 'manual']) {
+    for (const id of ['planner', 'executor', 'reviewer', 'quickfix', 'gemini', 'manual']) {
       expect(getAgent(id).id).toBe(id);
     }
+  });
+
+  it('merges newly introduced built-in agents into older saved registries', () => {
+    const saved = [
+      makeAgent({ id: 'planner', label: 'Saved Planner' }),
+      makeAgent({ id: 'executor', label: 'Saved Executor' }),
+    ];
+
+    loadAgentsFromDb(saved);
+
+    expect(getAgent('planner').label).toBe('Saved Planner');
+    expect(getAgent('gemini').provider).toBe('cli');
+    expect(getAgent('gemini').cliCommand).toBe('omx');
   });
 });
 
@@ -563,5 +615,63 @@ describe('manualProviderRun (real)', () => {
     expect(res.ok).toBe(false);
     expect(res.error).toMatch(/manual/i);
     expect(res.raw).toBeNull();
+  });
+});
+
+describe('cliProviderRun (real)', () => {
+  it('expands CLI argument templates and calls the generic Tauri command', async () => {
+    const api = await import('../js/api.js');
+    const invoke = api.tauriInvoke as unknown as ReturnType<typeof vi.fn>;
+
+    invoke.mockResolvedValueOnce({ output: 'cli-out', sessionId: null });
+
+    const real = await vi.importActual<typeof import('../js/agents/providers/cli.js')>(
+      '../js/agents/providers/cli.js'
+    );
+    const res = await real.cliProviderRun({
+      prompt: 'do thing',
+      model: 'gemini',
+      runId: 'r-cli-real-1',
+      workingDir: 'D:\\DEV\\PwTask',
+      systemPrompt: 'Be direct.',
+      cliCommand: 'omx',
+      cliArgs: ['gemini', '--model', '{model}', '--cwd', '{workingDir}', '{prompt}'],
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.output).toBe('cli-out');
+    const [commandName, args] = invoke.mock.calls[invoke.mock.calls.length - 1];
+
+    expect(commandName).toBe('run_cli');
+    expect(args).toEqual({
+      command: 'omx',
+      args: [
+        'gemini',
+        '--model',
+        'gemini',
+        '--cwd',
+        'D:\\DEV\\PwTask',
+        'Be direct.\n\ndo thing',
+      ],
+      workingDir: 'D:\\DEV\\PwTask',
+      runId: 'r-cli-real-1',
+    });
+  });
+
+  it('requires a command for generic CLI providers', async () => {
+    const real = await vi.importActual<typeof import('../js/agents/providers/cli.js')>(
+      '../js/agents/providers/cli.js'
+    );
+
+    const res = await real.cliProviderRun({
+      prompt: 'x',
+      model: 'gemini',
+      runId: 'r-cli-real-2',
+      cliCommand: '',
+      cliArgs: ['{prompt}'],
+    });
+
+    expect(res.ok).toBe(false);
+    expect(res.error).toMatch(/command is required/i);
   });
 });

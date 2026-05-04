@@ -521,6 +521,8 @@ button:focus:not(:focus-visible) { outline: none; }
 .task-action-btn.danger:hover { color: var(--red); border-color: var(--red); }
 .task-action-btn.quick-play-btn { color: var(--green); border-color: rgba(74,222,128,0.35); }
 .task-action-btn.quick-play-btn:hover { background: rgba(74,222,128,0.15); border-color: var(--green); }
+.task-action-btn.approve-done-btn { color: var(--green); border-color: rgba(74,222,128,0.45); background: rgba(74,222,128,0.10); }
+.task-action-btn.approve-done-btn:hover { background: var(--green); color: #0f1a0f; border-color: var(--green); }
 .status-select {
   padding: 2px 6px; background: var(--surface2); border: 1px solid var(--border);
   border-radius: var(--radius-sm); color: var(--text); font-size: var(--fs-xs); cursor: pointer; outline: none;
@@ -912,10 +914,15 @@ svg { display: block; }
 /* ─── TOPBAR (minimal) ─── */
 .topbar {
   display: flex; align-items: center; gap: 10px;
-  padding: 0 14px; height: var(--topbar-h);
+  padding: 0 0 0 14px; height: var(--topbar-h);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  user-select: none;
+}
+.window-title-region {
+  display: flex; align-items: center; gap: 10px;
+  flex: 1; align-self: stretch; min-width: 0;
 }
 .brand { display: flex; align-items: center; gap: 8px; }
 .brand-mark {
@@ -926,6 +933,17 @@ svg { display: block; }
 }
 .brand-name { font-weight: 600; font-size: 15px; color: var(--text); }
 .topbar-spacer { flex: 1; min-width: 12px; }
+
+.window-close-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 46px; height: var(--topbar-h); padding: 0;
+  border: none; border-radius: 0; cursor: pointer;
+  background: transparent; color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+}
+.window-close-btn:hover { background: #e81123; color: #fff; }
+.window-close-btn:active { background: #c50f1f; color: #fff; }
+.window-close-btn svg { width: 15px; height: 15px; }
 
 /* topbar — project info (takes up to 45% of bar, then ellipsis) */
 .topbar-project {
@@ -1037,6 +1055,8 @@ svg { display: block; }
 .board-card-progress-fill { height:100%; background:var(--green); transition:width 0.3s; }
 .board-card-sub-count { font-size:11px; color:var(--text-muted); margin-top:4px; }
 .board-card-parent { font-size:10px; color:var(--text-muted); margin-bottom:4px; padding:1px 0; border-left:2px solid var(--border2); padding-left:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.board-card-done-btn { margin-top:8px; width:100%; padding:5px 8px; border-radius:var(--radius-sm); border:1px solid rgba(74,222,128,0.45); background:rgba(74,222,128,0.10); color:var(--green); font-size:var(--fs-xs); font-weight:700; cursor:pointer; }
+.board-card-done-btn:hover { background:var(--green); color:#0f1a0f; border-color:var(--green); }
 
 /* ─── Chip size variant used in board cards ─── */
 .chip--xs { padding:1px 6px; font-size:10px; gap:3px; }

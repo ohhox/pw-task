@@ -65,6 +65,17 @@ const DEFAULT_AGENTS: Agent[] = [
     systemPrompt: '',
   },
   {
+    id: 'gemini',
+    label: 'Gemini (OMX)',
+    provider: 'cli',
+    defaultModel: 'gemini',
+    capabilities: ['plan_project', 'implement', 'review'],
+    enabled: true,
+    systemPrompt: '',
+    cliCommand: 'omx',
+    cliArgs: ['gemini', '{prompt}'],
+  },
+  {
     id: 'manual',
     label: 'Manual',
     provider: 'manual',
@@ -120,6 +131,11 @@ export function loadAgentsFromDb(savedAgents: Agent[] | undefined | null): void 
     _cache = DEFAULT_AGENTS.map((a) => ({ ...a }));
   } else {
     _cache = savedAgents.map((a) => ({ ...a, systemPrompt: a.systemPrompt ?? '' }));
+    for (const defaultAgent of DEFAULT_AGENTS) {
+      if (!_cache.some((a) => a.id === defaultAgent.id)) {
+        _cache.push({ ...defaultAgent });
+      }
+    }
   }
   // Mirror to Rust without blocking the loader. `void` to silence
   // floating-promise lint complaints.
@@ -211,6 +227,8 @@ export async function agentUpdate(id: string, patch: Partial<Agent>): Promise<vo
   if ('defaultModel' in patch) rustPatch.defaultModel = patch.defaultModel ?? null;
   if ('allowedTools' in patch) rustPatch.allowedTools = patch.allowedTools ?? null;
   if ('skipPermissions' in patch) rustPatch.skipPermissions = patch.skipPermissions ?? null;
+  if ('cliCommand' in patch) rustPatch.cliCommand = patch.cliCommand ?? null;
+  if ('cliArgs' in patch) rustPatch.cliArgs = patch.cliArgs ?? null;
 
   const res = await commands.agentUpdate(
     id,

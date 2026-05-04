@@ -76,7 +76,7 @@ export function showAgentManagerModal(): void {
 export function showAgentEditModal(agentId: string | null, onSaved: () => void): void {
   const isNew = agentId === null;
   const a: Agent = isNew
-    ? { id: '', label: '', provider: 'claude', defaultModel: 'claude-sonnet-4-6', capabilities: [], enabled: true, systemPrompt: '' }
+    ? { id: '', label: '', provider: 'claude', defaultModel: 'claude-sonnet-4-6', capabilities: [], enabled: true, systemPrompt: '', cliCommand: '', cliArgs: ['{prompt}'] }
     : { ...getAgent(agentId) };
 
   const modelOptsHtml = MODEL_OPTIONS.map((o) =>
@@ -93,6 +93,7 @@ export function showAgentEditModal(agentId: string | null, onSaved: () => void):
     <div class="modal-field"><label class="modal-label">Provider</label>
       <select class="modal-select" id="ae-provider"${!isNew && agentId !== null && DEFAULT_AGENT_IDS.has(agentId) ? ' disabled' : ''}>
         <option value="claude"${a.provider === 'claude' ? ' selected' : ''}>claude</option>
+        <option value="cli"${a.provider === 'cli' ? ' selected' : ''}>cli</option>
         <option value="manual"${a.provider === 'manual' ? ' selected' : ''}>manual</option>
       </select></div>
     <div class="modal-field"><label class="modal-label">Default Model</label>
@@ -101,23 +102,34 @@ export function showAgentEditModal(agentId: string | null, onSaved: () => void):
         ${modelOptsHtml}
       </select></div>
     <div class="modal-field"><label class="modal-label">System Prompt <span style="font-size:10px;color:var(--text-muted)">(optional — prepended to every run)</span></label>
-      <textarea class="modal-textarea" id="ae-sysprompt" style="min-height:100px;font-family:monospace;font-size:12px">${esc(a.systemPrompt || '')}</textarea></div>`,
+      <textarea class="modal-textarea" id="ae-sysprompt" style="min-height:100px;font-family:monospace;font-size:12px">${esc(a.systemPrompt || '')}</textarea></div>
+    <div class="modal-field"><label class="modal-label">CLI Command <span style="font-size:10px;color:var(--text-muted)">(provider = cli, e.g. omx)</span></label>
+      <input class="modal-input" id="ae-cli-command" value="${esc(a.cliCommand || '')}" placeholder="omx" style="font-family:monospace"></div>
+    <div class="modal-field"><label class="modal-label">CLI Args Template <span style="font-size:10px;color:var(--text-muted)">(one arg per line; placeholders: {prompt}, {model}, {sessionId}, {workingDir})</span></label>
+      <textarea class="modal-textarea" id="ae-cli-args" style="min-height:88px;font-family:monospace;font-size:12px" placeholder="gemini&#10;{prompt}">${esc((a.cliArgs && a.cliArgs.length ? a.cliArgs : ['{prompt}']).join('\n'))}</textarea></div>`,
     (ov) => {
       const label = qInput(ov, '#ae-label').value.trim();
       if (!label) { toast('Label is required'); return false; }
       const systemPrompt = qTextarea(ov, '#ae-sysprompt').value;
       const defaultModel = qSelect(ov, '#ae-model').value || null;
+      const provider = qSelect(ov, '#ae-provider').value as AgentProvider;
+      const cliCommand = qInput(ov, '#ae-cli-command').value.trim() || null;
+      const cliArgs = qTextarea(ov, '#ae-cli-args').value
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      if (provider === 'cli' && !cliCommand) { toast('CLI Command is required for cli provider'); return false; }
       if (isNew) {
         const id = qInput(ov, '#ae-id').value.trim().replace(/\s+/g, '-').toLowerCase();
         if (!id) { toast('ID is required'); return false; }
         if (getAllAgents().find((x) => x.id === id)) { toast('Agent ID already exists'); return false; }
-        agentAdd({ id, label, provider: qSelect(ov, '#ae-provider').value as AgentProvider, defaultModel, capabilities: [], enabled: true, systemPrompt })
+        agentAdd({ id, label, provider, defaultModel, capabilities: [], enabled: true, systemPrompt, cliCommand, cliArgs })
           .then(() => onSaved())
           .catch((e: unknown) => toast('❌ ' + (e instanceof Error ? e.message : String(e))));
       } else {
-        const patch: Partial<Agent> = { label, systemPrompt, defaultModel };
+        const patch: Partial<Agent> = { label, systemPrompt, defaultModel, cliCommand, cliArgs };
         if (agentId !== null && !DEFAULT_AGENT_IDS.has(agentId)) {
-          patch.provider = qSelect(ov, '#ae-provider').value as AgentProvider;
+          patch.provider = provider;
         }
         if (agentId !== null) {
           agentUpdate(agentId, patch)

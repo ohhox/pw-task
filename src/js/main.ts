@@ -1,6 +1,7 @@
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 // Owns: DOM event bindings, font-size toggle, and app initialization (tryRestoreDir).
 // Does NOT: contain business logic — wires UI events to the appropriate module functions.
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { getLogger } from '../logger.js';
 import { activeProjectId, filterState, setSelectedTaskPath } from './state.js';
 import { esc, toast, getProject } from './data.js';
@@ -96,6 +97,13 @@ function toggleFilterBar(): void {
 $('btn-filter-toggle').addEventListener('click', toggleFilterBar);
 
 // ─── Top-bar buttons ──────────────────────────────────────────────────────
+$('btn-window-close').addEventListener('click', async () => {
+  try {
+    await getCurrentWindow().close();
+  } catch (e) {
+    toast('❌ ปิดโปรแกรมไม่สำเร็จ: ' + String(e));
+  }
+});
 $('btn-open').addEventListener('click', openFolder);
 $('btn-open-welcome').addEventListener('click', openFolder);
 $('btn-save').addEventListener('click', saveFile);

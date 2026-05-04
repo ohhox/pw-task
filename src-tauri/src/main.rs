@@ -7,12 +7,13 @@ use ai_task_flow::{
 };
 use ai_task_flow::db::DbState;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use tauri::{Emitter, Manager};
 use tauri_specta::{collect_commands, Builder};
 
 // ── Active child-process tracker ─────────────────────────────────────────────
-// Stores PIDs of every running `claude` subprocess. On app exit every PID is
+// Stores PIDs of every running AI CLI subprocess. On app exit every PID is
 // force-killed so the process exits cleanly instead of hanging on child.wait().
 #[derive(Default)]
 struct ActiveRuns(Arc<Mutex<Vec<u32>>>);
@@ -38,6 +39,127 @@ fn kill_pid(pid: u32) {
             .args(["-9", &pid.to_string()])
             .spawn();
     }
+}
+
+fn existing_file(path: PathBuf) -> Option<PathBuf> {
+    path.is_file().then_some(path)
+}
+
+fn common_cli_dirs() -> Vec<PathBuf> {
+    let mut dirs: Vec<PathBuf> = Vec::new();
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(user_profile) = std::env::var_os("USERPROFILE") {
+            let user_profile = PathBuf::from(user_profile);
+            dirs.push(user_profile.join(".local").join("bin"));
+            dirs.push(user_profile.join(".cargo").join("bin"));
+        }
+        if let Some(appdata) = std::env::var_os("APPDATA") {
+            dirs.push(PathBuf::from(appdata).join("npm"));
+        }
+        if let Some(local_appdata) = std::env::var_os("LOCALAPPDATA") {
+            dirs.push(PathBuf::from(local_appdata).join("Programs").join("nodejs"));
+        }
+        if let Some(program_files) = std::env::var_os("ProgramFiles") {
+            dirs.push(PathBuf::from(program_files).join("nodejs"));
+        }
+    }
+    dirs
+}
+
+fn find_in_path(names: &[String]) -> Option<PathBuf> {
+    let path = std::env::var_os("PATH")?;
+    for dir in std::env::split_paths(&path) {
+        for name in names {
+            if let Some(found) = existing_file(dir.join(name)) {
+                return Some(found);
+            }
+        }
+    }
+    None
+}
+
+fn cli_candidate_names(command: &str) -> Vec<String> {
+    let trimmed = command.trim();
+    #[cfg(target_os = "windows")]
+    {
+        let lower = trimmed.to_lowercase();
+        if lower.ends_with(".exe") || lower.ends_with(".cmd") || lower.ends_with(".bat") {
+            vec![trimmed.to_string()]
+        } else {
+            vec![
+                format!("{trimmed}.exe"),
+                format!("{trimmed}.cmd"),
+                format!("{trimmed}.bat"),
+                trimmed.to_string(),
+            ]
+        }
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        vec![trimmed.to_string()]
+    }
+}
+
+fn resolve_cli_command(command: &str) -> Option<PathBuf> {
+    let trimmed = command.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    let direct = PathBuf::from(trimmed);
+    if direct.components().count() > 1 {
+        return existing_file(direct);
+    }
+    let names = cli_candidate_names(trimmed);
+    // Packaged Tauri apps often start with a trimmed PATH and therefore miss
+    // per-user CLI install locations even when `where claude` works in a shell.
+    for dir in common_cli_dirs() {
+        for name in &names {
+            if let Some(found) = existing_file(dir.join(name)) {
+                return Some(found);
+            }
+        }
+    }
+
+    find_in_path(&names)
+}
+
+fn resolve_claude_cli() -> Option<PathBuf> {
+    resolve_cli_command("claude")
+}
+
+fn claude_cli_not_found_message() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        "claude CLI not found. Searched PATH plus %USERPROFILE%\\.local\\bin, %APPDATA%\\npm, %USERPROFILE%\\.cargo\\bin, and Node.js install folders. Install Claude Code or add claude.exe/claude.cmd to one of those locations.".to_string()
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        "claude CLI not found in PATH. Install Claude Code or add `claude` to PATH.".to_string()
+    }
+}
+
+fn prepare_cli_command(program: &PathBuf, args: &[String]) -> std::process::Command {
+    #[cfg(target_os = "windows")]
+    {
+        let ext = program
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or_default()
+            .to_ascii_lowercase();
+        if ext == "cmd" || ext == "bat" {
+            let mut command = std::process::Command::new("cmd");
+            command.arg("/C").arg(program).args(args);
+            command.creation_flags(CREATE_NO_WINDOW);
+            return command;
+        }
+    }
+
+    let mut command = std::process::Command::new(program);
+    command.args(args);
+    #[cfg(target_os = "windows")]
+    command.creation_flags(CREATE_NO_WINDOW);
+    command
 }
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
@@ -443,9 +565,11 @@ async fn run_claude(
             }
         }
 
-        let mut cmd = std::process::Command::new("claude");
-        cmd.args(&args)
-            .stdout(std::process::Stdio::piped())
+        let claude_program = resolve_claude_cli().ok_or_else(claude_cli_not_found_message)?;
+        tracing::info!(action = "run_claude", cli = %claude_program.display());
+
+        let mut cmd = prepare_cli_command(&claude_program, &args);
+        cmd.stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped());
 
         if let Some(dir) = working_dir {
@@ -455,7 +579,7 @@ async fn run_claude(
         }
 
         let mut child = cmd.spawn()
-            .map_err(|e| format!("claude CLI not found: {}", e))?;
+            .map_err(|e| format!("failed to start claude CLI at {}: {}", claude_program.display(), e))?;
 
         // Track PID so we can kill the child if the window closes mid-run.
         let pid = child.id();
@@ -541,6 +665,95 @@ async fn run_claude(
         }
 
         Ok::<RunResult, String>(RunResult { output: text_output, session_id: captured_sid, usage: captured_usage })
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+#[specta::specta]
+async fn run_cli(
+    app: tauri::AppHandle,
+    command: String,
+    args: Vec<String>,
+    working_dir: Option<String>,
+    run_id: String,
+) -> Result<RunResult, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        use std::io::BufRead;
+
+        let program = resolve_cli_command(&command).ok_or_else(|| {
+            format!(
+                "CLI command '{}' not found. Add it to PATH or a known user CLI directory.",
+                command
+            )
+        })?;
+        tracing::info!(action = "run_cli", cli = %program.display(), arg_count = args.len());
+
+        let mut cmd = prepare_cli_command(&program, &args);
+        cmd.stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
+
+        if let Some(dir) = working_dir {
+            if !dir.is_empty() {
+                cmd.current_dir(&dir);
+            }
+        }
+
+        let mut child = cmd
+            .spawn()
+            .map_err(|e| format!("failed to start CLI at {}: {}", program.display(), e))?;
+
+        let pid = child.id();
+        let runs = app.state::<ActiveRuns>().inner().0.clone();
+        runs.lock().unwrap().push(pid);
+
+        let stdout = child.stdout.take().unwrap();
+        let stderr_handle = child.stderr.take();
+        let stderr_thread = stderr_handle.map(|s| {
+            std::thread::spawn(move || {
+                use std::io::Read;
+                let mut buf = String::new();
+                std::io::BufReader::new(s).read_to_string(&mut buf).ok();
+                buf
+            })
+        });
+
+        let reader = std::io::BufReader::new(stdout);
+        let mut text_output = String::new();
+        for line in reader.lines().flatten() {
+            text_output.push_str(&line);
+            text_output.push('\n');
+            let _ = app.emit(&format!("run-line:{}", run_id), &line);
+        }
+
+        let status = child.wait().map_err(|e| e.to_string())?;
+        runs.lock().unwrap().retain(|&p| p != pid);
+        let stderr_text = stderr_thread
+            .and_then(|t| t.join().ok())
+            .unwrap_or_default();
+
+        if !status.success() {
+            let code = status.code().unwrap_or(-1);
+            let detail = if !stderr_text.trim().is_empty() {
+                stderr_text.trim().chars().take(400).collect::<String>()
+            } else if !text_output.trim().is_empty() {
+                text_output.trim().chars().take(400).collect::<String>()
+            } else {
+                "no output".to_string()
+            };
+            return Err(format!("CLI '{}' exited with code {}: {}", command, code, detail));
+        }
+
+        if text_output.trim().is_empty() && !stderr_text.trim().is_empty() {
+            text_output = stderr_text;
+        }
+
+        Ok::<RunResult, String>(RunResult {
+            output: text_output,
+            session_id: None,
+            usage: None,
+        })
     })
     .await
     .map_err(|e| e.to_string())?
@@ -774,6 +987,7 @@ fn make_specta_builder() -> Builder<tauri::Wry> {
         open_log_folder,
         write_log_entry,
         run_claude,
+        run_cli,
         task_count_by_status,
         task_calc_progress,
         task_is_fully_done,

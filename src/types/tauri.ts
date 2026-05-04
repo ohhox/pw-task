@@ -22,6 +22,13 @@ export interface RunClaudeArgs {
   skipPermissions?: boolean;
 }
 
+export interface RunCliArgs {
+  command: string;
+  args: string[];
+  workingDir?: string | null;
+  runId: string;
+}
+
 export interface RunResult {
   output: string;
   sessionId: string | null;
@@ -51,8 +58,9 @@ export interface TauriCommands {
   open_terminal: (args: { path: string }) => Promise<void>;
   run_project_command: (args: { cmd: string; workingDir: string }) => Promise<void>;
 
-  // Claude orchestration — emits `run-line:{runId}` events while streaming
+  // AI CLI orchestration — emits `run-line:{runId}` events while streaming
   run_claude: (args: RunClaudeArgs) => Promise<RunResult>;
+  run_cli: (args: RunCliArgs) => Promise<RunResult>;
 }
 
 export type TauriCommandName = keyof TauriCommands;

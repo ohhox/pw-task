@@ -35,6 +35,8 @@ pub fn default_agents() -> Vec<Agent> {
             system_prompt: String::new(),
             allowed_tools: None,
             skip_permissions: None,
+            cli_command: None,
+            cli_args: None,
         },
         Agent {
             id: "executor".into(),
@@ -46,6 +48,8 @@ pub fn default_agents() -> Vec<Agent> {
             system_prompt: String::new(),
             allowed_tools: None,
             skip_permissions: None,
+            cli_command: None,
+            cli_args: None,
         },
         Agent {
             id: "reviewer".into(),
@@ -61,6 +65,8 @@ pub fn default_agents() -> Vec<Agent> {
             system_prompt: String::new(),
             allowed_tools: None,
             skip_permissions: None,
+            cli_command: None,
+            cli_args: None,
         },
         Agent {
             id: "quickfix".into(),
@@ -72,6 +78,21 @@ pub fn default_agents() -> Vec<Agent> {
             system_prompt: String::new(),
             allowed_tools: None,
             skip_permissions: None,
+            cli_command: None,
+            cli_args: None,
+        },
+        Agent {
+            id: "gemini".into(),
+            label: "Gemini (OMX)".into(),
+            provider: AgentProvider::Cli,
+            default_model: Some("gemini".into()),
+            capabilities: vec!["plan_project".into(), "implement".into(), "review".into()],
+            enabled: true,
+            system_prompt: String::new(),
+            allowed_tools: None,
+            skip_permissions: None,
+            cli_command: Some("omx".into()),
+            cli_args: Some(vec!["gemini".into(), "{prompt}".into()]),
         },
         Agent {
             id: "manual".into(),
@@ -83,6 +104,8 @@ pub fn default_agents() -> Vec<Agent> {
             system_prompt: String::new(),
             allowed_tools: None,
             skip_permissions: None,
+            cli_command: None,
+            cli_args: None,
         },
     ]
 }
@@ -90,7 +113,7 @@ pub fn default_agents() -> Vec<Agent> {
 /// Set of agent ids the dashboard treats as "built-in" — used to disable the
 /// delete button and lock the provider field. Kept here so the rule lives next
 /// to the agents themselves.
-pub const DEFAULT_AGENT_IDS: &[&str] = &["planner", "executor", "reviewer", "quickfix", "manual"];
+pub const DEFAULT_AGENT_IDS: &[&str] = &["planner", "executor", "reviewer", "quickfix", "gemini", "manual"];
 
 /// Process-wide registry. Wrapped in a `RwLock` because reads (every render
 /// frame asking `agentList`) vastly outnumber writes (occasional CRUD from
@@ -125,6 +148,10 @@ pub struct AgentPatch {
     pub allowed_tools: Option<Option<Vec<String>>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub skip_permissions: Option<Option<bool>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cli_command: Option<Option<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cli_args: Option<Option<Vec<String>>>,
 }
 
 // ─── CRUD helpers ────────────────────────────────────────────────────────────
@@ -178,6 +205,12 @@ pub fn agent_update(id: &str, patch: AgentPatch) -> Result<bool, String> {
     }
     if let Some(sp) = patch.skip_permissions {
         agent.skip_permissions = sp;
+    }
+    if let Some(cmd) = patch.cli_command {
+        agent.cli_command = cmd;
+    }
+    if let Some(args) = patch.cli_args {
+        agent.cli_args = args;
     }
     Ok(true)
 }

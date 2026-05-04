@@ -9,7 +9,7 @@ import { esc, calcProgress } from './data.js';
 import { scheduleSave } from './fileops.js';
 import { priorityChip, chip } from '../views/components/chip.js';
 import { getTaskAgentLabel } from './agents/index.js';
-import { renderSidebar } from './render.js';
+import { renderSidebar, renderTaskList } from './render.js';
 import { openWorkspace } from './main.js';
 import { renderDetail } from './detail.js';
 import { showAddTaskModal } from './modals.js';
@@ -158,6 +158,9 @@ function buildCard(entry: CardEntry): HTMLDivElement {
   const parentHtml = parentTitle
     ? `<div class="board-card-parent">${esc(parentTitle)}</div>`
     : '';
+  const approveHtml = task.status === 'pending_review'
+    ? `<button class="board-card-done-btn" data-action="approve-done" data-path="${esc(path.join('/'))}" type="button">✓ Done</button>`
+    : '';
 
   card.innerHTML = `
     ${parentHtml}
@@ -166,6 +169,7 @@ function buildCard(entry: CardEntry): HTMLDivElement {
     ${noteHtml}
     ${subHtml}
     ${progressHtml}
+    ${approveHtml}
   `;
 
   return card;
@@ -290,6 +294,27 @@ function handleBoardClick(e: MouseEvent): void {
   const addBtn = target.closest<HTMLElement>('[data-add-col]');
   if (addBtn) {
     showAddTaskModal(null);
+    return;
+  }
+
+  const approveBtn = target.closest<HTMLElement>('[data-action="approve-done"]');
+  if (approveBtn) {
+    const path = (approveBtn.dataset.path || '').split('/').filter(Boolean);
+    const proj = getProject(activeProjectId);
+    if (!proj || !path.length) return;
+    const task = findByPath(proj.tasks, path);
+    if (!task || task.status !== 'pending_review') return;
+    task.status = 'done';
+    task.completedAt = now();
+    task.updatedAt = now();
+    (task.reviews = task.reviews || []).push({ timestamp: now(), action: 'approved', comment: '', reviewer: 'Manual' });
+    (task.activityLog = task.activityLog || []).push({ timestamp: now(), agent: 'Manual', action: 'approved → done (board)' });
+    proj.tasks.forEach(autoEscalate);
+    scheduleSave();
+    renderBoard();
+    renderSidebar();
+    renderTaskList();
+    renderDetail();
     return;
   }
 

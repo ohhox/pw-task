@@ -333,7 +333,7 @@ export function renderDetail() {
     const commentArea = document.createElement('textarea'); commentArea.className = 'review-textarea';
     commentArea.placeholder = 'Review comment (optional for Approve, required for Request Changes)…';
     const btnRow = document.createElement('div'); btnRow.className = 'review-btn-row';
-    const approveBtn = document.createElement('button'); approveBtn.className = 'review-btn approve'; approveBtn.textContent = '✅ Approve';
+    const approveBtn = document.createElement('button'); approveBtn.className = 'review-btn approve'; approveBtn.textContent = '✅ Done';
     approveBtn.addEventListener('click', () => {
       (task.reviews = task.reviews||[]).push({ timestamp:now(), action:'approved', comment:commentArea.value.trim(), reviewer:'Manual' });
       task.status = 'done'; task.completedAt = now(); task.updatedAt = now();

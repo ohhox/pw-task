@@ -104,6 +104,14 @@ async runClaude(prompt: string, model: string, sessionId: string | null, working
     else return { status: "error", error: e  as any };
 }
 },
+async runCli(command: string, args: string[], workingDir: string | null, runId: string) : Promise<Result<RunResult, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("run_cli", { command, args, workingDir, runId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 /**
  * Recursive count of every status across the tree.
  * 
@@ -302,7 +310,11 @@ export type Agent = { id: string; label: string; provider: AgentProvider; defaul
 /**
  * Per-agent permission profile from upgrade-01 fix. Optional during migration.
  */
-allowedTools?: string[] | null; skipPermissions?: boolean | null }
+allowedTools?: string[] | null; skipPermissions?: boolean | null; 
+/**
+ * Generic external CLI provider configuration (provider = "cli").
+ */
+cliCommand?: string | null; cliArgs?: string[] | null }
 /**
  * Sparse update payload for `agent_update`. Every field is optional so the
  * caller can patch a single attribute without echoing the rest. Matches the
@@ -313,11 +325,11 @@ allowedTools?: string[] | null; skipPermissions?: boolean | null }
  * convention for `system_prompt` would be wrong because the TS code treats
  * `""` as the cleared state.
  */
-export type AgentPatch = { label?: string | null; provider?: AgentProvider | null; defaultModel?: string | null; systemPrompt?: string | null; capabilities?: string[] | null; enabled?: boolean | null; allowedTools?: string[] | null; skipPermissions?: boolean | null }
+export type AgentPatch = { label?: string | null; provider?: AgentProvider | null; defaultModel?: string | null; systemPrompt?: string | null; capabilities?: string[] | null; enabled?: boolean | null; allowedTools?: string[] | null; skipPermissions?: boolean | null; cliCommand?: string | null; cliArgs?: string[] | null }
 /**
  * Provider type for an agent (claude CLI vs manual/external).
  */
-export type AgentProvider = "claude" | "manual"
+export type AgentProvider = "claude" | "cli" | "manual"
 /**
  * Summary returned by `apply_batch`. The TS dashboard surfaces these counts
  * in a toast and uses `applied_patch_ids` to update its activity log.

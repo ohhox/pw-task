@@ -10,6 +10,7 @@
 // `./index.ts` is reserved for render paths.
 
 import { claudeProviderRun } from './providers/claude.js';
+import { cliProviderRun } from './providers/cli.js';
 import { manualProviderRun } from './providers/manual.js';
 import { commands } from '../../bindings.js';
 import { getAgent } from './index.js';
@@ -28,6 +29,8 @@ export interface ProviderRunArgs {
   systemPrompt?: string | null;
   allowedTools?: string[] | null;
   skipPermissions?: boolean;
+  cliCommand?: string | null;
+  cliArgs?: string[] | null;
 }
 
 export interface ProviderResult {
@@ -44,6 +47,7 @@ export type ProviderFn = (args: ProviderRunArgs) => Promise<ProviderResult>;
 
 function getProviderFn(provider: AgentProvider | string): ProviderFn | null {
   if (provider === 'claude') return claudeProviderRun;
+  if (provider === 'cli') return cliProviderRun;
   if (provider === 'manual') return manualProviderRun;
   return null;
 }
@@ -99,6 +103,8 @@ export async function runTaskWithAgent({
     systemPrompt: systemPrompt || agentEntry.systemPrompt || null,
     allowedTools: agentEntry.allowedTools ?? null,
     skipPermissions: agentEntry.skipPermissions ?? false,
+    cliCommand: agentEntry.cliCommand ?? null,
+    cliArgs: agentEntry.cliArgs ?? null,
   });
   return { ...result, agentId, provider, model };
 }
@@ -138,6 +144,8 @@ export async function planProjectWithAgent({
     systemPrompt: agentEntry.systemPrompt || null,
     allowedTools: agentEntry.allowedTools ?? null,
     skipPermissions: agentEntry.skipPermissions ?? false,
+    cliCommand: agentEntry.cliCommand ?? null,
+    cliArgs: agentEntry.cliArgs ?? null,
   });
   return { ...result, agentId, provider: agentEntry.provider, model };
 }

@@ -250,6 +250,7 @@ function buildTaskNode(task: Task, path: string[]): HTMLDivElement {
           `<option value="${s}"${task.status === s ? ' selected' : ''}>${statusLabel(s)}</option>`
         ).join('')}
       </select>
+      ${task.status === 'pending_review' ? `<button class="task-action-btn approve-done-btn" data-action="approve-done" data-path="${path.join('/')}" title="Mark as done">✓ Done</button>` : ''}
       ${path.length === 1 ? `<button class="task-action-btn quick-play-btn" data-action="quick-play" data-path="${path.join('/')}" title="Run next subtask">▶</button>` : ''}
       <button class="task-action-btn" data-action="add-sub" data-path="${path.join('/')}">＋ Sub</button>
       <button class="task-action-btn" data-action="edit" data-path="${path.join('/')}">✏️</button>
@@ -284,6 +285,20 @@ export function initTaskListEvents(): void {
       else if (actionBtn.dataset.action === 'add-sub') showAddTaskModal(p);
       else if (actionBtn.dataset.action === 'delete') confirmDeleteTask(p);
       else if (actionBtn.dataset.action === 'quick-play') quickPlay(p);
+      else if (actionBtn.dataset.action === 'approve-done') {
+        const t = findTaskByPath(p);
+        if (!t || t.status !== 'pending_review') return;
+        t.status = 'done';
+        t.completedAt = now();
+        t.updatedAt = now();
+        (t.reviews = t.reviews || []).push({ timestamp: now(), action: 'approved', comment: '', reviewer: 'Manual' });
+        (t.activityLog = t.activityLog || []).push({ timestamp: now(), agent: 'Manual', action: 'approved → done' });
+        getProject(activeProjectId)?.tasks.forEach(autoEscalate);
+        scheduleSave();
+        renderSidebar();
+        renderTaskList();
+        if (selectedTaskPath?.join('/') === p.join('/')) renderDetail();
+      }
       return;
     }
 

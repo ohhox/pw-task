@@ -66,23 +66,29 @@ fn agent_fixture(id: &str) -> Agent {
         system_prompt: String::new(),
         allowed_tools: None,
         skip_permissions: None,
+        cli_command: None,
+        cli_args: None,
     }
 }
 
 // ── default_agents ──────────────────────────────────────────────────────────
 
 #[test]
-fn default_agents_has_five_canonical_entries() {
+fn default_agents_has_six_canonical_entries() {
     let agents = default_agents();
-    assert_eq!(agents.len(), 5);
+    assert_eq!(agents.len(), 6);
     let ids: Vec<&str> = agents.iter().map(|a| a.id.as_str()).collect();
-    assert_eq!(ids, vec!["planner", "executor", "reviewer", "quickfix", "manual"]);
+    assert_eq!(ids, vec!["planner", "executor", "reviewer", "quickfix", "gemini", "manual"]);
     // Sanity check the providers + models we expect downstream code to rely on.
     let manual = agents.iter().find(|a| a.id == "manual").unwrap();
     assert_eq!(manual.provider, AgentProvider::Manual);
     assert!(manual.default_model.is_none());
     let planner = agents.iter().find(|a| a.id == "planner").unwrap();
     assert_eq!(planner.default_model.as_deref(), Some("claude-opus-4-7"));
+    let gemini = agents.iter().find(|a| a.id == "gemini").unwrap();
+    assert_eq!(gemini.provider, AgentProvider::Cli);
+    assert_eq!(gemini.cli_command.as_deref(), Some("omx"));
+    assert_eq!(gemini.cli_args.as_ref().unwrap(), &vec!["gemini".to_string(), "{prompt}".to_string()]);
 }
 
 #[test]
@@ -360,12 +366,12 @@ fn replace_all_falls_back_to_defaults_for_empty_or_none() {
     agent_add(agent_fixture("extra")).unwrap();
 
     replace_all(None);
-    assert_eq!(agent_list().len(), 5);
+    assert_eq!(agent_list().len(), default_agents().len());
     assert!(!agent_list().iter().any(|a| a.id == "extra"));
 
     agent_add(agent_fixture("extra")).unwrap();
     replace_all(Some(vec![]));
-    assert_eq!(agent_list().len(), 5);
+    assert_eq!(agent_list().len(), default_agents().len());
 }
 
 // ── thread safety ───────────────────────────────────────────────────────────

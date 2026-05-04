@@ -121,6 +121,8 @@ pub fn resolved_for_task(task: &Task) -> ResolvedAgent {
                 system_prompt: String::new(),
                 allowed_tools: None,
                 skip_permissions: None,
+                cli_command: None,
+                cli_args: None,
             }
         });
 

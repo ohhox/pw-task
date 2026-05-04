@@ -13,7 +13,7 @@ export type ModelId =
   | 'claude-sonnet-4-6'
   | 'claude-opus-4-7';
 
-export type AgentProvider = 'claude' | 'manual';
+export type AgentProvider = 'claude' | 'cli' | 'manual';
 
 // ─── TASK ─────────────────────────────────────────────────────────────────
 
@@ -122,6 +122,9 @@ export interface Agent {
   /** Per-agent permission profile from upgrade-01 fix. Optional during migration. */
   allowedTools?: string[] | null;
   skipPermissions?: boolean;
+  /** Generic external CLI provider configuration (provider = "cli"). */
+  cliCommand?: string | null;
+  cliArgs?: string[] | null;
 }
 
 // ─── PATCH ────────────────────────────────────────────────────────────────

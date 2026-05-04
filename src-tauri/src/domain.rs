@@ -53,6 +53,7 @@ pub enum TaskPriority {
 #[serde(rename_all = "lowercase")]
 pub enum AgentProvider {
     Claude,
+    Cli,
     Manual,
 }
 
@@ -217,6 +218,11 @@ pub struct Agent {
     pub allowed_tools: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub skip_permissions: Option<bool>,
+    /// Generic external CLI provider configuration (provider = "cli").
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cli_command: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cli_args: Option<Vec<String>>,
 }
 
 // ─── PATCH / CHANGE ──────────────────────────────────────────────────────────
