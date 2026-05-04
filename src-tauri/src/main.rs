@@ -17,6 +17,13 @@ use tauri_specta::{collect_commands, Builder};
 #[derive(Default)]
 struct ActiveRuns(Arc<Mutex<Vec<u32>>>);
 
+// ── Workspace scope ───────────────────────────────────────────────────────────
+// Canonical root directory that the user opened.  All mutating FS commands
+// (write / delete / create_dir) must stay inside this boundary so a crafted
+// patch file cannot reach outside the project folder.
+#[derive(Default)]
+struct WorkspaceRoot(Mutex<Option<String>>);
+
 fn kill_pid(pid: u32) {
     #[cfg(target_os = "windows")]
     {
@@ -48,20 +55,93 @@ fn get_config() -> String {
 
 #[tauri::command]
 #[specta::specta]
-fn set_config(tasks_dir: String) -> Result<(), String> {
+fn set_config(tasks_dir: String, root: tauri::State<WorkspaceRoot>) -> Result<(), String> {
+    // Persist config file
     let path = config_path_for(&config_dir());
-    write_config_to(&path, &tasks_dir)
+    write_config_to(&path, &tasks_dir)?;
+    // Update in-memory workspace scope
+    *root.0.lock().unwrap() = Some(tasks_dir.clone());
+    tracing::info!(action = "workspace_opened", path = %tasks_dir);
+    Ok(())
+}
+
+// ── Path safety guard ────────────────────────────────────────────────────────
+// Rejects paths that traverse outside the caller's intended directory or
+// target known system locations.  Applied to every file-system command so
+// a malicious task file cannot reach outside the workspace.
+fn assert_safe_path(path: &str) -> Result<(), String> {
+    use std::path::Component;
+    if path.trim().is_empty() {
+        return Err("Empty path denied".into());
+    }
+    // Block parent-directory traversal regardless of OS
+    for comp in std::path::Path::new(path).components() {
+        if comp == Component::ParentDir {
+            return Err(format!("Path traversal (..) denied: {path}"));
+        }
+    }
+    // Block Windows system directories
+    #[cfg(target_os = "windows")]
+    {
+        let lower = path.to_lowercase().replace('/', "\\");
+        for prefix in &[
+            "c:\\windows\\", "c:\\program files\\",
+            "c:\\program files (x86)\\", "c:\\windows\\system32",
+        ] {
+            if lower.starts_with(prefix) {
+                return Err(format!("System path denied: {path}"));
+            }
+        }
+    }
+    // Block Unix system directories
+    #[cfg(not(target_os = "windows"))]
+    for prefix in &["/etc/", "/usr/", "/bin/", "/sbin/", "/sys/", "/proc/", "/boot/"] {
+        if path.starts_with(prefix) {
+            return Err(format!("System path denied: {path}"));
+        }
+    }
+    Ok(())
+}
+
+// Ensure `path` is inside the workspace root that the user opened.
+// Uses canonical paths to defeat symlink-based escapes.
+fn assert_within_workspace(path: &str, root: &tauri::State<WorkspaceRoot>) -> Result<(), String> {
+    let guard = root.0.lock().unwrap();
+    let Some(ref root_str) = *guard else { return Ok(()); }; // no root set yet (startup)
+    let canon_root = std::fs::canonicalize(root_str)
+        .unwrap_or_else(|_| std::path::PathBuf::from(root_str));
+    // For not-yet-created paths, canonicalize the parent and reconstruct
+    let target = std::path::Path::new(path);
+    let canon_target = std::fs::canonicalize(target).unwrap_or_else(|_| {
+        if let Some(parent) = target.parent() {
+            std::fs::canonicalize(parent)
+                .unwrap_or_else(|_| parent.to_path_buf())
+                .join(target.file_name().unwrap_or_default())
+        } else {
+            target.to_path_buf()
+        }
+    });
+    if !canon_target.starts_with(&canon_root) {
+        return Err(format!(
+            "Access denied: path is outside the workspace.\n  path: {path}\n  workspace: {root_str}"
+        ));
+    }
+    Ok(())
 }
 
 #[tauri::command]
 #[specta::specta]
 fn read_text_file(path: String) -> Result<String, String> {
+    assert_safe_path(&path)?;
     read_file(&path)
 }
 
 #[tauri::command]
 #[specta::specta]
-fn write_text_file(path: String, contents: String) -> Result<(), String> {
+fn write_text_file(path: String, contents: String, root: tauri::State<WorkspaceRoot>) -> Result<(), String> {
+    assert_safe_path(&path)?;
+    assert_within_workspace(&path, &root)?;
+    tracing::info!(audit = true, action = "write", path = %path);
     write_file(&path, &contents)
 }
 
@@ -69,25 +149,34 @@ fn write_text_file(path: String, contents: String) -> Result<(), String> {
 // it as .bak first so a crash mid-rename leaves a recoverable copy on disk.
 #[tauri::command]
 #[specta::specta]
-fn write_text_file_atomic(path: String, contents: String) -> Result<(), String> {
+fn write_text_file_atomic(path: String, contents: String, root: tauri::State<WorkspaceRoot>) -> Result<(), String> {
+    assert_safe_path(&path)?;
+    assert_within_workspace(&path, &root)?;
+    tracing::info!(audit = true, action = "write_atomic", path = %path);
     atomic_write(&path, &contents)
 }
 
 #[tauri::command]
 #[specta::specta]
 fn read_dir(path: String) -> Result<Vec<serde_json::Value>, String> {
+    assert_safe_path(&path)?;
     list_dir(&path)
 }
 
 #[tauri::command]
 #[specta::specta]
-fn remove_file(path: String) -> Result<(), String> {
+fn remove_file(path: String, root: tauri::State<WorkspaceRoot>) -> Result<(), String> {
+    assert_safe_path(&path)?;
+    assert_within_workspace(&path, &root)?;
+    tracing::info!(audit = true, action = "delete", path = %path);
     delete_file(&path)
 }
 
 #[tauri::command]
 #[specta::specta]
-fn create_dir(path: String) -> Result<(), String> {
+fn create_dir(path: String, root: tauri::State<WorkspaceRoot>) -> Result<(), String> {
+    assert_safe_path(&path)?;
+    assert_within_workspace(&path, &root)?;
     lib_create_dir(&path)
 }
 
@@ -748,6 +837,7 @@ fn main() {
         .plugin(tauri_plugin_shell::init())
         .manage(DbState::new())
         .manage(ActiveRuns::default())
+        .manage(WorkspaceRoot::default())
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
             builder.mount_events(app);

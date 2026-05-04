@@ -81,6 +81,8 @@ export interface Task {
   reviews?: Review[];
   activityLog?: ActivityLogEntry[];
 
+  dueDate?: string | null;
+
   createdAt: string;
   updatedAt?: string;
   completedAt?: string | null;

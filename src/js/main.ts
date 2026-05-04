@@ -96,7 +96,7 @@ function toggleFilterBar(): void {
 $('btn-filter-toggle').addEventListener('click', toggleFilterBar);
 
 // ─── Top-bar buttons ──────────────────────────────────────────────────────
-$('btn-open').addEventListener('click', () => { closeSettings(); openFolder(); });
+$('btn-open').addEventListener('click', openFolder);
 $('btn-open-welcome').addEventListener('click', openFolder);
 $('btn-save').addEventListener('click', saveFile);
 $('btn-archive').addEventListener('click', archiveDoneTasks);
@@ -120,6 +120,8 @@ $('btn-run-project').addEventListener('click', async () => {
   const proj = getProject(activeProjectId);
   if (!proj?.runCommand) { toast('ยังไม่ได้ตั้ง Run Command'); return; }
   if (!proj?.workingDir) { toast('ยังไม่ได้ตั้ง Working Directory'); return; }
+  // Security: show exact command before execution so user can verify
+  if (!window.confirm(`Run command?\n\n"${proj.runCommand}"\n\nDirectory: ${proj.workingDir}`)) return;
   try { await tauriRunProjectCmd(proj.runCommand, proj.workingDir); }
   catch (e) { toast('❌ ' + String(e)); }
 });
@@ -170,7 +172,6 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     // Close in z-order: palette → settings → help → modal → drawer
     if (document.getElementById('palette-overlay')?.style.display !== 'none') { closePalette(); return; }
-    if (document.getElementById('settings-overlay')?.style.display !== 'none') { closeSettings(); return; }
     if (document.getElementById('help-overlay')?.style.display !== 'none') { closeHelp(); return; }
     const modal = document.querySelector('.modal-overlay');
     if (modal) { modal.remove(); return; }
@@ -193,31 +194,50 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ─── View tabs (Sprint 3 / Phase A — placeholder switcher) ────────────────
-// List view is the only working view; Board/Timeline/Calendar render a
-// "coming soon" card. Wiring the click handler now keeps the tabs alive
-// across renders without re-binding per-project.
-const VIEW_PANES: Record<string, string> = {
+// ─── View tabs ──────────────────────────────────────────────────────────────
+// Keep the selected project view stable across rerenders and app restarts.
+const VIEW_PANES = {
   list: 'task-list-view',
   board: 'board-view',
-  timeline: 'timeline-view',
-  calendar: 'calendar-view',
-};
+} as const;
+type ViewKey = keyof typeof VIEW_PANES;
+
+const LAST_VIEW_KEY = 'pwtask-last-view';
 const viewTabs = document.getElementById('view-tabs');
-viewTabs?.addEventListener('click', (e) => {
-  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.view-tab');
-  if (!btn || !btn.dataset.view) return;
-  const target = btn.dataset.view;
-  if (!VIEW_PANES[target]) return;
-  // Toggle active tab
-  viewTabs.querySelectorAll('.view-tab').forEach((t) => t.classList.toggle('active', t === btn));
-  // Toggle pane visibility
+
+function isViewKey(value: string | null | undefined): value is ViewKey {
+  return Boolean(value && Object.prototype.hasOwnProperty.call(VIEW_PANES, value));
+}
+
+function applyView(target: ViewKey, options: { persist?: boolean } = {}): void {
+  viewTabs?.querySelectorAll('.view-tab').forEach((tab) => {
+    tab.classList.toggle('active', (tab as HTMLElement).dataset.view === target);
+  });
+
   for (const [view, paneId] of Object.entries(VIEW_PANES)) {
     const pane = document.getElementById(paneId);
     if (pane) pane.style.display = view === target ? '' : 'none';
   }
-  // Populate board when switching to it
+
   if (target === 'board') renderBoard();
+
+  if (options.persist !== false) {
+    try { localStorage.setItem(LAST_VIEW_KEY, target); } catch {}
+  }
+}
+
+function restoreLastView(): void {
+  let saved: string | null = null;
+  try { saved = localStorage.getItem(LAST_VIEW_KEY); } catch {}
+  applyView(isViewKey(saved) ? saved : 'list', { persist: false });
+}
+
+viewTabs?.addEventListener('click', (e) => {
+  const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.view-tab');
+  if (!btn || !btn.dataset.view) return;
+  const target = btn.dataset.view;
+  if (!isViewKey(target)) return;
+  applyView(target);
 });
 
 // ─── Sync button (now in settings panel) ──────────────────────────────────
@@ -234,25 +254,30 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') checkPatches();
 });
 
-$('btn-agent-mgr').addEventListener('click', () => { closeSettings(); showAgentManagerModal(); });
+$('btn-agent-mgr').addEventListener('click', showAgentManagerModal);
 
-// ─── Settings panel ───────────────────────────────────────────────────────
-function openSettings(): void {
-  const el = document.getElementById('settings-overlay');
-  if (el) el.style.display = 'flex';
+
+// ─── Theme toggle ─────────────────────────────────────────────────────────
+const _MOON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+const _SUN_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+
+function applyTheme(theme: 'light' | 'dark'): void {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  const btn = document.getElementById('btn-theme');
+  if (btn) btn.innerHTML = theme === 'dark' ? _SUN_SVG : _MOON_SVG;
+  try { localStorage.setItem('pwtask-theme', theme); } catch {}
 }
-function closeSettings(): void {
-  const el = document.getElementById('settings-overlay');
-  if (el) el.style.display = 'none';
-}
-$('btn-settings').addEventListener('click', () => {
-  const el = document.getElementById('settings-overlay');
-  if (el && el.style.display !== 'none') { closeSettings(); } else { openSettings(); }
-});
-document.getElementById('settings-close')?.addEventListener('click', closeSettings);
-document.getElementById('settings-overlay')?.addEventListener('click', (e) => {
-  if (e.target === document.getElementById('settings-overlay')) closeSettings();
-});
+
+const _saved = (() => { try { return localStorage.getItem('pwtask-theme'); } catch { return null; } })();
+const _initTheme: 'light' | 'dark' = (_saved === 'light' || _saved === 'dark') ? _saved
+  : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+applyTheme(_initTheme);
+
+// Use onclick (not addEventListener) — prevents duplicate handlers on Vite HMR reloads
+$('btn-theme').onclick = () => {
+  applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+};
 
 // ─── Font size toggle ─────────────────────────────────────────────────────
 type FsKey = 'fs-s' | 'fs-m' | 'fs-l';
@@ -321,4 +346,5 @@ initTaskListEvents();
 initBoardEvents();
 initPalette();
 initRouting();
+restoreLastView();
 tryRestoreDir();

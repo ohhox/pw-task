@@ -311,47 +311,71 @@ Each task must have exactly these fields:
       return;
     }
 
-    const patchTs = new Date().toISOString();
-    const executorId = proj.agentDefaults?.executor || 'executor';
-    const patch: Patch = {
-      version: '1.0',
-      timestamp: patchTs,
-      agent: 'Claude (Plan)',
-      changes: tasks.map((t) => {
-        const task: Task = {
-          id: uuid(),
-          title: t.title,
-          description: t.description || '',
-          status: 'todo',
-          priority: (t.priority || 'medium') as TaskPriority,
-          agentId: executorId,
-          aiAgent: getAgent(executorId).label,
-          model: t.model || 'claude-sonnet-4-6',
-          prompt: t.prompt || '',
-          tags: [],
-          reviews: [],
-          subtasks: [],
-          filesModified: [],
-          lastSessionId: null,
-          runHistory: [],
-          createdAt: patchTs,
-          activityLog: [{ timestamp: patchTs, agent: 'Claude (Plan)', action: 'created by ✨ Plan AI' }],
-        };
-        return {
-          type: 'add_task' as const,
-          projectId: proj.id,
-          parentTaskId: null as string | null,
-          task,
-        };
-      }),
-    };
+    // ── Preview: show checklist before committing ─────────────────────────
+    statusEl.textContent = `✅ พบ ${tasks.length} tasks — เลือกที่ต้องการเพิ่ม`;
+    const termEl = ov.querySelector<HTMLElement>('#plan-terminal');
+    if (termEl) {
+      termEl.innerHTML = tasks.map((t, i) => `
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06)">
+          <input type="checkbox" id="pt-${i}" checked style="margin-top:2px;accent-color:#58A6FF;flex-shrink:0">
+          <label for="pt-${i}" style="cursor:pointer;flex:1">
+            <div style="font-size:13px;font-weight:500;color:#E6EDF3">${esc(t.title)}</div>
+            <div style="font-size:11px;color:#6E7681;margin-top:2px">${t.priority || 'medium'} · ${(t.model || 'sonnet').split('-')[1] || 'sonnet'}</div>
+          </label>
+        </div>`).join('');
+    }
+    closeBtn.disabled = false;
+    closeBtn.textContent = 'Cancel';
 
-    await tauriWriteText(joinPath(joinPath(baseDir, 'patches'), patchFileName('PlanAI')), JSON.stringify(patch, null, 2));
-    await applyPatches();
-    renderSidebar();
-    renderProject();
-    statusEl.textContent = `✅ สร้าง ${tasks.length} tasks สำเร็จ!`;
-    toast(`✨ Plan สำเร็จ! สร้าง ${tasks.length} tasks`);
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'modal-btn primary';
+    confirmBtn.textContent = `Add ${tasks.length} Tasks`;
+    confirmBtn.style.marginRight = 'auto';
+    ov.querySelector('.modal-actions')?.prepend(confirmBtn);
+
+    const currentBaseDir = baseDir;
+    confirmBtn.addEventListener('click', async () => {
+      if (!currentBaseDir) { toast('⚠️ ยังไม่ได้เลือก folder'); return; }
+      const selected = tasks.filter((_, i) => (ov.querySelector<HTMLInputElement>(`#pt-${i}`))?.checked);
+      if (!selected.length) { toast('⚠️ ยังไม่ได้เลือก task ไหนเลย'); return; }
+      confirmBtn.disabled = true; confirmBtn.textContent = 'Adding…';
+
+      const patchTs = new Date().toISOString();
+      const executorId = proj.agentDefaults?.executor || 'executor';
+      const patch: Patch = {
+        version: '1.0',
+        timestamp: patchTs,
+        agent: 'Claude (Plan)',
+        changes: selected.map((t) => {
+          const task: Task = {
+            id: uuid(),
+            title: t.title,
+            description: t.description || '',
+            status: 'todo',
+            priority: (t.priority || 'medium') as TaskPriority,
+            agentId: executorId,
+            aiAgent: getAgent(executorId).label,
+            model: t.model || 'claude-sonnet-4-6',
+            prompt: t.prompt || '',
+            tags: [],
+            reviews: [],
+            subtasks: [],
+            filesModified: [],
+            lastSessionId: null,
+            runHistory: [],
+            createdAt: patchTs,
+            activityLog: [{ timestamp: patchTs, agent: 'Claude (Plan)', action: 'created by ✨ Plan AI' }],
+          };
+          return { type: 'add_task' as const, projectId: proj.id, parentTaskId: null as string | null, task };
+        }),
+      };
+
+      await tauriWriteText(joinPath(joinPath(currentBaseDir, 'patches'), patchFileName('PlanAI')), JSON.stringify(patch, null, 2));
+      await applyPatches();
+      renderSidebar(); renderProject();
+      toast(`✨ Plan สำเร็จ! เพิ่ม ${selected.length} tasks`);
+      if (document.body.contains(ov)) document.body.removeChild(ov);
+    });
   } catch (e) {
     unlistenLine();
     statusEl.textContent = '❌ ' + errMsg(e);

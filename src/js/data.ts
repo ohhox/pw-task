@@ -103,6 +103,43 @@ export function sanitizeLinkUrl(url: string): string {
   return /^https?:\/\//i.test(t) ? t.replace(/"/g, '%22') : '#';
 }
 
+// DOM-based HTML sanitizer — runs AFTER marked.parse() to strip dangerous tags/attrs.
+// Uses the browser's own parser so encoding tricks can't bypass it.
+const _MD_OK_TAGS = new Set([
+  'p','br','strong','em','b','i','code','pre','ul','ol','li',
+  'h1','h2','h3','h4','h5','h6','blockquote','a','hr','del','s',
+  'table','thead','tbody','tr','th','td','span',
+]);
+const _MD_OK_ATTRS: Record<string, Set<string>> = {
+  a:   new Set(['href','title','target','rel']),
+  '*': new Set(['class']),
+};
+
+function _sanitizeNode(node: Node): void {
+  if (node.nodeType !== Node.ELEMENT_NODE) return;
+  const el = node as Element;
+  const tag = el.tagName.toLowerCase();
+  if (!_MD_OK_TAGS.has(tag)) {
+    el.replaceWith(document.createTextNode(el.textContent ?? ''));
+    return;
+  }
+  const okAttrs = new Set([...(_MD_OK_ATTRS[tag] ?? []), ...(_MD_OK_ATTRS['*'] ?? [])]);
+  for (const attr of Array.from(el.attributes)) {
+    if (!okAttrs.has(attr.name)) { el.removeAttribute(attr.name); continue; }
+    if (attr.name === 'href') el.setAttribute('href', sanitizeLinkUrl(attr.value));
+  }
+  Array.from(el.childNodes).forEach(_sanitizeNode);
+}
+
+function _sanitizeMd(html: string): string {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  Array.from(tpl.content.childNodes).forEach(_sanitizeNode);
+  const wrap = document.createElement('div');
+  wrap.appendChild(tpl.content);
+  return wrap.innerHTML;
+}
+
 // Configure marked once with safe defaults + custom link renderer.
 let _markedReady = false;
 function _setupMarked(): void {
@@ -128,12 +165,11 @@ export function renderMd(text: string | null | undefined): string {
   if (typeof marked !== 'undefined') {
     _setupMarked();
     try {
-      return marked.parse(String(text));
+      return _sanitizeMd(String(marked.parse(String(text))));
     } catch (e) {
       log.warn('marked parse failed, falling back', { error: e instanceof Error ? e.message : String(e) });
     }
   }
-  // Fallback: minimal escape if marked is unavailable (e.g. CDN blocked)
   return `<pre style="white-space:pre-wrap;font-family:inherit">${esc(text)}</pre>`;
 }
 

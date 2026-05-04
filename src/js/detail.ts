@@ -162,8 +162,17 @@ export function renderDetail() {
     });
   });
 
+  const dueDateInput = document.createElement('input');
+  dueDateInput.type = 'date'; dueDateInput.className = 'ws-due-input';
+  dueDateInput.value = task.dueDate || ''; dueDateInput.title = 'Due date';
+  dueDateInput.addEventListener('change', () => {
+    task.dueDate = dueDateInput.value || null; task.updatedAt = now();
+    scheduleSave(); renderTaskList();
+  });
+
   toolbar.appendChild(statusChip); toolbar.appendChild(priorityChip);
   toolbar.appendChild(agentChip); toolbar.appendChild(modelChip);
+  toolbar.appendChild(dueDateInput);
   const sp = document.createElement('span'); sp.style.flex = '1'; toolbar.appendChild(sp);
   toolbar.appendChild(idBtn);
   toolbar.appendChild(ctxBtn);

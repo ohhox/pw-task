@@ -21,6 +21,20 @@ import { updateHash } from './routing.js';
 import { $ } from './dom.js';
 import type { Task, TaskStatus } from '../types/domain';
 
+function dueDateChip(dueDate: string): string {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate + 'T00:00:00');
+  const diffDays = Math.round((due.getTime() - today.getTime()) / 86400000);
+  if (diffDays < 0)  return `<span class="due-chip due-chip--overdue" title="${dueDate}">⚠ ${Math.abs(diffDays)}d overdue</span>`;
+  if (diffDays === 0) return `<span class="due-chip due-chip--today" title="${dueDate}">📅 Today</span>`;
+  if (diffDays <= 3)  return `<span class="due-chip due-chip--soon" title="${dueDate}">📅 ${diffDays}d</span>`;
+  return `<span class="due-chip due-chip--ok" title="${dueDate}">📅 ${dueDate.slice(5).replace('-', '/')}</span>`;
+}
+
+function notifyTaskViewChanged(): void {
+  document.dispatchEvent(new CustomEvent('pwtask:task-view-changed'));
+}
+
 // ─── BULK SELECT ──────────────────────────────────────────────────────────────
 
 let _bulkMode = false;
@@ -98,7 +112,7 @@ export function renderProject(): void {
     if (quickAct) quickAct.style.display = 'none';
     if (db && db.projects.length === 0) {
       showWelcome(
-        `<p style="margin:0 0 12px;color:var(--text-2)">ยังไม่มี project — เริ่มต้นสร้าง project แรกได้เลย</p>` +
+        `<p style="margin:0 0 12px;color:var(--text-muted)">ยังไม่มี project — เริ่มต้นสร้าง project แรกได้เลย</p>` +
         `<button class="btn-primary btn-sm" id="onboarding-add-project">＋ สร้าง Project แรก</button>`
       );
       requestAnimationFrame(() => {
@@ -169,6 +183,7 @@ export function renderTaskList(): void {
   if (!proj) {
     container.innerHTML = '';
     if (countEl) countEl.textContent = '';
+    notifyTaskViewChanged();
     return;
   }
   const visible = (proj.tasks || [])
@@ -181,10 +196,12 @@ export function renderTaskList(): void {
   }
   if (!visible.length) {
     container.innerHTML = '<div class="empty-state">No tasks match your filter</div>';
+    notifyTaskViewChanged();
     return;
   }
   container.innerHTML = '';
   visible.forEach((t) => container.appendChild(buildTaskNode(t, [t.id])));
+  notifyTaskViewChanged();
 }
 
 function buildTaskNode(task: Task, path: string[]): HTMLDivElement {
@@ -220,6 +237,7 @@ function buildTaskNode(task: Task, path: string[]): HTMLDivElement {
         ${(() => { const lbl = getTaskAgentLabel(task); return lbl && lbl !== 'Executor' ? chip({ label: lbl, variant: 'agent' }) : ''; })()}
         ${task.model ? `<span class="badge ${modelBadgeClass(task.model)}">${esc(modelShortName(task.model))}</span>` : ''}
         ${(task.tags || []).map((t) => chip({ label: '#' + t, variant: 'tag' })).join('')}
+        ${task.dueDate ? dueDateChip(task.dueDate) : ''}
         ${(task.filesModified || []).length ? `<span class="task-meta-text">📎 ${task.filesModified.length}</span>` : ''}
         ${progress !== null ? `<span class="task-meta-text">${progress}%</span>` : ''}
         ${hasReviews ? `<span class="task-meta-text">💬</span>` : ''}

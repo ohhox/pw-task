@@ -39,6 +39,8 @@ interface DragPayload {
   path: string[];
 }
 
+let _boardDragging = false;
+
 // ─── Render ───────────────────────────────────────────────────────────────────
 export function renderBoard(): void {
   const container = document.getElementById('board-container');
@@ -191,6 +193,14 @@ export function initBoardEvents(): void {
   boardContainer.addEventListener('drop', handleDrop);
   boardContainer.addEventListener('dragend', handleDragEnd);
   boardContainer.addEventListener('click', handleBoardClick);
+
+  // WebView2 fallback: ensure dragover preventDefault fires even outside board-container bounds
+  document.addEventListener('dragover', (e) => { if (_boardDragging) e.preventDefault(); });
+  document.addEventListener('dragend', () => { _boardDragging = false; });
+  document.addEventListener('pwtask:task-view-changed', () => {
+    const boardView = document.getElementById('board-view');
+    if (boardView && boardView.style.display !== 'none') renderBoard();
+  });
 }
 
 function handleDragStart(e: DragEvent): void {
@@ -198,9 +208,11 @@ function handleDragStart(e: DragEvent): void {
   if (!card || !e.dataTransfer) return;
   const path = (card.dataset.path || '').split('/');
   const payload: DragPayload = { path };
-  e.dataTransfer.setData('text/plain', JSON.stringify(payload));
+  // effectAllowed must be set before setData for WebView2 compatibility
   e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', JSON.stringify(payload));
   card.classList.add('dragging');
+  _boardDragging = true;
 }
 
 function handleDragOver(e: DragEvent): void {
@@ -261,6 +273,7 @@ function handleDragEnd(e: DragEvent): void {
   const card = (e.target as Element).closest<HTMLElement>('.board-card');
   if (card) card.classList.remove('dragging');
   document.querySelectorAll('.board-col-body.dragover').forEach((el) => el.classList.remove('dragover'));
+  _boardDragging = false;
 }
 
 function handleBoardClick(e: MouseEvent): void {

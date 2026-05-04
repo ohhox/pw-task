@@ -29,18 +29,21 @@ export function showAddTaskModal(parentPath: string[] | null): void {
         <option value="">— agent default —</option>
         ${MODEL_OPTIONS.map((o) => `<option value="${o.id}">${o.label}</option>`).join('')}
       </select></div>
+    <div class="modal-field"><label class="modal-label">Due Date</label><input class="modal-input" id="t-due" type="date"></div>
     <div class="modal-field"><label class="modal-label">Prompt</label><textarea class="modal-textarea" id="t-prompt" placeholder="คำสั่งสำหรับ Claude…" style="min-height:70px;font-size:12px"></textarea></div>`,
     (ov) => {
       const title = qInput(ov, '#t-title').value.trim();
       if (!title) { toast('Title is required'); return false; }
       const agentId = qSelect(ov, '#t-agent').value;
       const agentEntry = getAgent(agentId);
+      const dueVal = (ov.querySelector<HTMLInputElement>('#t-due'))?.value.trim() || null;
       const task: Task = {
         id: uuid(),
         title,
         description: qTextarea(ov, '#t-desc').value.trim(),
         status: 'todo',
         priority: qSelect(ov, '#t-priority').value as TaskPriority,
+        dueDate: dueVal || null,
         tags: [],
         agentId,
         aiAgent: agentEntry.label,
@@ -87,7 +90,8 @@ export function showEditTaskModal(path: string[]): void {
       <select class="modal-select" id="t-agent">${getEnabledAgents().map((a) => {
         const sel = (task.agentId || legacyToAgentId(task.aiAgent || '')) === a.id;
         return `<option value="${a.id}"${sel ? ' selected' : ''}>${a.label}</option>`;
-      }).join('')}</select></div>`,
+      }).join('')}</select></div>
+    <div class="modal-field"><label class="modal-label">Due Date</label><input class="modal-input" id="t-due" type="date" value="${task.dueDate || ''}"></div>`,
     (ov) => {
       const title = qInput(ov, '#t-title').value.trim();
       if (!title) { toast('Title is required'); return false; }
@@ -107,6 +111,7 @@ export function showEditTaskModal(path: string[]): void {
       task.priority = qSelect(ov, '#t-priority').value as TaskPriority;
       task.agentId = newAgentId;
       task.aiAgent = getAgent(newAgentId).label;
+      task.dueDate = (ov.querySelector<HTMLInputElement>('#t-due'))?.value.trim() || null;
       task.updatedAt = now();
       getProject(activeProjectId)?.tasks.forEach(autoEscalate);
       scheduleSave();
