@@ -14,9 +14,10 @@ import { statusChip, priorityChip, chip } from '../views/components/chip.js';
 import { getEnabledAgents, getTaskAgentLabel, legacyToAgentId } from './agents/index.js';
 import { scheduleSave, showWelcome } from './fileops.js';
 import { renderDetail } from './detail.js';
-import { showAddTaskModal, showEditTaskModal, confirmDeleteTask } from './modals.js';
+import { showAddProjectModal, showAddTaskModal, showEditTaskModal, confirmDeleteTask } from './modals.js';
 import { quickPlay } from './ai.js';
 import { openWorkspace, closeWorkspace } from './main.js';
+import { updateHash } from './routing.js';
 import { $ } from './dom.js';
 import type { Task, TaskStatus } from '../types/domain';
 
@@ -66,7 +67,7 @@ export function renderSidebar(): void {
         <div class="project-name">${esc(p.name)}</div>
         <div class="project-counts">${c.in_progress} doing · ${c.done}/${total} done${c.pending_review ? ` · ${c.pending_review} review` : ''}</div>
       </div>`;
-    div.addEventListener('click', () => { setActiveProjectId(p.id); setSelectedTaskPath(null); renderSidebar(); renderProject(); });
+    div.addEventListener('click', () => { setActiveProjectId(p.id); setSelectedTaskPath(null); renderSidebar(); renderProject(); updateHash(p.id, null); });
     list.appendChild(div);
   });
 
@@ -90,7 +91,17 @@ export function renderProject(): void {
     $('task-list').innerHTML = '';
     closeWorkspace();
     setSelectedTaskPath(null);
-    showWelcome('');
+    if (db && db.projects.length === 0) {
+      showWelcome(
+        `<p style="margin:0 0 12px;color:var(--text-2)">ยังไม่มี project — เริ่มต้นสร้าง project แรกได้เลย</p>` +
+        `<button class="btn-primary btn-sm" id="onboarding-add-project">＋ สร้าง Project แรก</button>`
+      );
+      requestAnimationFrame(() => {
+        document.getElementById('onboarding-add-project')?.addEventListener('click', showAddProjectModal);
+      });
+    } else {
+      showWelcome('');
+    }
     return;
   }
   // .proj-icon (id project-dot-big) shows the project's color block — fill the
@@ -288,6 +299,7 @@ export function initTaskListEvents(): void {
     setSelectedTaskPath(path);
     openWorkspace();
     renderDetail();
+    updateHash(activeProjectId, path);
   });
 
   container.addEventListener('change', (e: Event) => {

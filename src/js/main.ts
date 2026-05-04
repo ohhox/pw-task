@@ -20,6 +20,7 @@ import { planProject } from './ai.js';
 import { $, $maybe } from './dom.js';
 import { openPalette, closePalette, initPalette } from './palette.js';
 import { undo, redo, initHistory } from './history.js';
+import { initRouting, updateHash } from './routing.js';
 import {
   toggleBulkMode, isBulkMode, bulkSelected, clearBulkSelection,
 } from './render.js';
@@ -69,6 +70,7 @@ export function closeWorkspace(): void {
   const panel = $('detail-panel');
   const backdrop = $('drawer-backdrop');
   setSelectedTaskPath(null);
+  updateHash(activeProjectId, null);
   panel.classList.remove('open');
   backdrop.classList.remove('open');
   // Wait for the slide-out transition before hiding so we don't snap-flicker.
@@ -287,4 +289,5 @@ refreshAgentFilter();
 initTaskListEvents();
 initBoardEvents();
 initPalette();
+initRouting();
 tryRestoreDir();

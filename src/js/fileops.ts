@@ -514,4 +514,7 @@ function onDbLoaded(): void {
 
   if (syncTimer) clearInterval(syncTimer);
   syncTimer = setInterval(checkPatches, 30000);
+
+  // Signal to routing.ts that db is ready and hash restoration can proceed.
+  window.dispatchEvent(new CustomEvent('pwtask:ready'));
 }
