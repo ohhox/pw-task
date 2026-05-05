@@ -509,7 +509,7 @@ button:focus:not(:focus-visible) { outline: none; }
 
 .task-actions {
   display: flex; align-items: center; gap: 4px;
-  opacity: 0; transition: opacity var(--transition); flex-shrink: 0; margin-top: 1px;
+  opacity: 1; transition: opacity var(--transition); flex-shrink: 0; margin-top: 1px;
 }
 .task-row:hover .task-actions { opacity: 1; }
 .task-action-btn {
@@ -922,7 +922,7 @@ svg { display: block; }
 }
 .window-title-region {
   display: flex; align-items: center; gap: 10px;
-  flex: 1; align-self: stretch; min-width: 0;
+  flex: 1; align-self: stretch; min-width: 0; cursor: move;
 }
 .brand { display: flex; align-items: center; gap: 8px; }
 .brand-mark {
@@ -934,6 +934,7 @@ svg { display: block; }
 .brand-name { font-weight: 600; font-size: 15px; color: var(--text); }
 .topbar-spacer { flex: 1; min-width: 12px; }
 
+.window-control-btn,
 .window-close-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 46px; height: var(--topbar-h); padding: 0;
@@ -941,9 +942,12 @@ svg { display: block; }
   background: transparent; color: var(--text-muted);
   transition: background var(--transition), color var(--transition);
 }
+.window-control-btn:hover { background: var(--surface2); color: var(--text); }
+.window-control-btn:active { background: var(--surface3); }
+.window-control-btn svg,
+.window-close-btn svg { width: 15px; height: 15px; }
 .window-close-btn:hover { background: #e81123; color: #fff; }
 .window-close-btn:active { background: #c50f1f; color: #fff; }
-.window-close-btn svg { width: 15px; height: 15px; }
 
 /* topbar — project info (takes up to 45% of bar, then ellipsis) */
 .topbar-project {
@@ -1027,12 +1031,8 @@ svg { display: block; }
    Sprint 3 / Phase B — BOARD / KANBAN VIEW
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ─── Board toolbar ─── */
+/* ─── Board / Kanban columns ─── */
 .board { display:flex; flex-direction:column; height:100%; overflow:hidden; }
-.board-toolbar { display:flex; align-items:center; gap:8px; padding:8px 20px; flex-shrink:0; border-bottom:1px solid var(--border); background:var(--surface); }
-.board-toggle-btn { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border:1px solid var(--border); border-radius:99px; background:transparent; font-size:12px; color:var(--text-dim); cursor:pointer; }
-.board-toggle-btn:hover { background:var(--surface2); color:var(--text); }
-.board-toggle-btn.active { background:rgba(var(--accent-rgb),0.10); border-color:var(--accent); color:var(--accent); }
 
 /* ─── Board / Kanban columns ─── */
 .board-cols { display:flex; gap:12px; padding:16px 20px; overflow-x:auto; overflow-y:hidden; flex:1; align-items:flex-start; }
@@ -1055,8 +1055,13 @@ svg { display: block; }
 .board-card-progress-fill { height:100%; background:var(--green); transition:width 0.3s; }
 .board-card-sub-count { font-size:11px; color:var(--text-muted); margin-top:4px; }
 .board-card-parent { font-size:10px; color:var(--text-muted); margin-bottom:4px; padding:1px 0; border-left:2px solid var(--border2); padding-left:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.board-card-done-btn { margin-top:8px; width:100%; padding:5px 8px; border-radius:var(--radius-sm); border:1px solid rgba(74,222,128,0.45); background:rgba(74,222,128,0.10); color:var(--green); font-size:var(--fs-xs); font-weight:700; cursor:pointer; }
-.board-card-done-btn:hover { background:var(--green); color:#0f1a0f; border-color:var(--green); }
+.board-card-actions { display:flex; gap:6px; margin-top:8px; }
+.board-card-action { flex:1; padding:5px 8px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); color:var(--text-dim); font-size:var(--fs-xs); font-weight:700; cursor:pointer; }
+.board-card-action:hover { color:var(--text); border-color:var(--border2); }
+.board-card-action--done { border-color:rgba(74,222,128,0.45); background:rgba(74,222,128,0.10); color:var(--green); }
+.board-card-action--done:hover { background:var(--green); color:#0f1a0f; border-color:var(--green); }
+.board-card-action--delete { color:var(--red); }
+.board-card-action--delete:hover { background:rgba(var(--red-rgb),0.10); border-color:var(--red); color:var(--red); }
 
 /* ─── Chip size variant used in board cards ─── */
 .chip--xs { padding:1px 6px; font-size:10px; gap:3px; }

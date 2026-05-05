@@ -12,7 +12,7 @@ import {
 import {
   renderSidebar, renderProject, renderTaskList, refreshAgentFilter, initTaskListEvents,
 } from './render.js';
-import { renderBoard, initBoardEvents } from './board.js';
+import { renderBoard, initBoardEvents, syncBoardSubtasksToggleButton, toggleBoardSubtasks } from './board.js';
 import {
   showAddProjectModal, showEditProjectModal, showAddTaskModal,
   showClaudeMdCopyModal, showAgentManagerModal, confirmDeleteProject,
@@ -97,9 +97,66 @@ function toggleFilterBar(): void {
 $('btn-filter-toggle').addEventListener('click', toggleFilterBar);
 
 // ─── Top-bar buttons ──────────────────────────────────────────────────────
+const appWindow = getCurrentWindow();
+
+function _maximizedIcon(maximized: boolean): string {
+  return maximized
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 9h10v10H9z"/><path d="M5 15V5h10"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>';
+}
+
+async function updateMaximizeButton(): Promise<void> {
+  const btn = document.getElementById('btn-window-maximize');
+  if (!btn) return;
+  try {
+    const maximized = await appWindow.isMaximized();
+    btn.setAttribute('aria-pressed', String(maximized));
+    btn.setAttribute('aria-label', maximized ? 'Restore app window' : 'Maximize app window');
+    btn.setAttribute('title', maximized ? 'Restore app window' : 'Maximize app window');
+    btn.innerHTML = _maximizedIcon(maximized);
+  } catch (e) {
+    _globalLog.warn('Unable to read window maximized state', { error: String(e) });
+  }
+}
+
+
+function isTopbarInteractiveTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && Boolean(target.closest('button, input, textarea, select, a, [role="button"]'));
+}
+
+function initWindowDragging(): void {
+  const topbar = document.querySelector<HTMLElement>('.topbar');
+  if (!topbar) return;
+  topbar.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || isTopbarInteractiveTarget(e.target)) return;
+    void appWindow.startDragging().catch((error: unknown) => {
+      _globalLog.warn('Unable to start window drag', { error: String(error) });
+    });
+  });
+}
+
+$('btn-window-minimize').addEventListener('click', async () => {
+  try {
+    await appWindow.minimize();
+  } catch (e) {
+    toast('❌ ย่อหน้าต่างไม่สำเร็จ: ' + String(e));
+  }
+});
+
+$('btn-window-maximize').addEventListener('click', async () => {
+  try {
+    await appWindow.toggleMaximize();
+    await updateMaximizeButton();
+  } catch (e) {
+    toast('❌ ขยาย/คืนค่าหน้าต่างไม่สำเร็จ: ' + String(e));
+  }
+});
+void updateMaximizeButton();
+initWindowDragging();
+
 $('btn-window-close').addEventListener('click', async () => {
   try {
-    await getCurrentWindow().close();
+    await appWindow.close();
   } catch (e) {
     toast('❌ ปิดโปรแกรมไม่สำเร็จ: ' + String(e));
   }
@@ -137,6 +194,7 @@ $('btn-delete-project').addEventListener('click', confirmDeleteProject);
 $('btn-add-task').addEventListener('click', () => showAddTaskModal(null));
 $('detail-close').addEventListener('click', closeWorkspace);
 $('drawer-backdrop').addEventListener('click', closeWorkspace);
+
 
 // ─── Filters ──────────────────────────────────────────────────────────────
 $<HTMLInputElement>('search-input').addEventListener('input', (e) => {
@@ -227,7 +285,14 @@ function applyView(target: ViewKey, options: { persist?: boolean } = {}): void {
     if (pane) pane.style.display = view === target ? '' : 'none';
   }
 
-  if (target === 'board') renderBoard();
+  const subtasksBtn = document.getElementById('btn-board-subtasks');
+  if (subtasksBtn) subtasksBtn.style.display = target === 'board' ? '' : 'none';
+
+  if (target === 'board') {
+    renderBoard();
+  } else {
+    syncBoardSubtasksToggleButton();
+  }
 
   if (options.persist !== false) {
     try { localStorage.setItem(LAST_VIEW_KEY, target); } catch {}
@@ -239,6 +304,8 @@ function restoreLastView(): void {
   try { saved = localStorage.getItem(LAST_VIEW_KEY); } catch {}
   applyView(isViewKey(saved) ? saved : 'list', { persist: false });
 }
+
+$('btn-board-subtasks').addEventListener('click', toggleBoardSubtasks);
 
 viewTabs?.addEventListener('click', (e) => {
   const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.view-tab');

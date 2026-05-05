@@ -1060,6 +1060,10 @@ fn main() {
             // so child.wait() unblocks and the process exits cleanly.
             let handle = app.handle().clone();
             if let Some(win) = app.get_webview_window("main") {
+                if let Err(error) = win.minimize() {
+                    tracing::warn!(%error, "failed to minimize main window on startup");
+                }
+
                 win.on_window_event(move |event| {
                     if matches!(event, tauri::WindowEvent::Destroyed) {
                         let pids: Vec<u32> = handle

@@ -12,7 +12,7 @@ import { getTaskAgentLabel } from './agents/index.js';
 import { renderSidebar, renderTaskList } from './render.js';
 import { openWorkspace } from './main.js';
 import { renderDetail } from './detail.js';
-import { showAddTaskModal } from './modals.js';
+import { showAddTaskModal, confirmDeleteTask } from './modals.js';
 import type { Task, TaskStatus } from '../types/domain';
 
 // ─── Column config ────────────────────────────────────────────────────────────
@@ -32,6 +32,30 @@ interface CardEntry {
   task: Task;
   path: string[];
   parentTitle?: string; // set only for subtasks
+}
+
+function collectSubtaskEntries(task: Task, path: string[], parentTrail: string[]): CardEntry[] {
+  const entries: CardEntry[] = [];
+  for (const sub of task.subtasks || []) {
+    const subPath = [...path, sub.id];
+    entries.push({ task: sub, path: subPath, parentTitle: parentTrail.join(' › ') });
+    entries.push(...collectSubtaskEntries(sub, subPath, [...parentTrail, sub.title]));
+  }
+  return entries;
+}
+
+export function syncBoardSubtasksToggleButton(): void {
+  const btn = document.getElementById('btn-board-subtasks');
+  if (!btn) return;
+  btn.classList.toggle('active', showSubtasks);
+  btn.setAttribute('aria-pressed', String(showSubtasks));
+  btn.textContent = `${showSubtasks ? '▾' : '▸'} SubTasks`;
+}
+
+export function toggleBoardSubtasks(): void {
+  showSubtasks = !showSubtasks;
+  syncBoardSubtasksToggleButton();
+  renderBoard();
 }
 
 // ─── Drag payload ─────────────────────────────────────────────────────────────
@@ -58,24 +82,15 @@ export function renderBoard(): void {
     if (bucket) bucket.push({ task: root, path: [root.id] });
 
     if (showSubtasks) {
-      for (const sub of root.subtasks || []) {
-        const subBucket = byStatus.get(sub.status);
-        if (subBucket) subBucket.push({ task: sub, path: [root.id, sub.id], parentTitle: root.title });
+      for (const entry of collectSubtaskEntries(root, [root.id], [root.title])) {
+        const subBucket = byStatus.get(entry.task.status);
+        if (subBucket) subBucket.push(entry);
       }
     }
   }
 
   container.innerHTML = '';
-
-  // Toggle toolbar
-  const toolbar = document.createElement('div');
-  toolbar.className = 'board-toolbar';
-  toolbar.innerHTML = `
-    <button class="board-toggle-btn${showSubtasks ? ' active' : ''}" data-action="toggle-subtasks" type="button">
-      ${showSubtasks ? '▾' : '▸'} Subtasks
-    </button>
-  `;
-  container.appendChild(toolbar);
+  syncBoardSubtasksToggleButton();
 
   // Columns wrapper
   const cols = document.createElement('div');
@@ -158,8 +173,9 @@ function buildCard(entry: CardEntry): HTMLDivElement {
   const parentHtml = parentTitle
     ? `<div class="board-card-parent">${esc(parentTitle)}</div>`
     : '';
+  const pathAttr = esc(path.join('/'));
   const approveHtml = task.status === 'pending_review'
-    ? `<button class="board-card-done-btn" data-action="approve-done" data-path="${esc(path.join('/'))}" type="button">✓ Done</button>`
+    ? `<button class="board-card-action board-card-action--done" data-action="approve-done" data-path="${pathAttr}" type="button">✓ Done</button>`
     : '';
 
   card.innerHTML = `
@@ -169,7 +185,10 @@ function buildCard(entry: CardEntry): HTMLDivElement {
     ${noteHtml}
     ${subHtml}
     ${progressHtml}
-    ${approveHtml}
+    <div class="board-card-actions">
+      ${approveHtml}
+      <button class="board-card-action board-card-action--delete" data-action="delete" data-path="${pathAttr}" type="button" title="Delete task" aria-label="Delete task">🗑 Delete</button>
+    </div>
   `;
 
   return card;
@@ -283,17 +302,18 @@ function handleDragEnd(e: DragEvent): void {
 function handleBoardClick(e: MouseEvent): void {
   const target = e.target as Element;
 
-  // Toggle subtasks
-  if (target.closest('[data-action="toggle-subtasks"]')) {
-    showSubtasks = !showSubtasks;
-    renderBoard();
-    return;
-  }
-
   // ＋ add-task button
   const addBtn = target.closest<HTMLElement>('[data-add-col]');
   if (addBtn) {
     showAddTaskModal(null);
+    return;
+  }
+
+  const deleteBtn = target.closest<HTMLElement>('[data-action="delete"]');
+  if (deleteBtn) {
+    const path = (deleteBtn.dataset.path || '').split('/').filter(Boolean);
+    if (!path.length) return;
+    confirmDeleteTask(path);
     return;
   }
 
